@@ -5,6 +5,7 @@ import { createStock, MAX_STOCK, MIN_STOCK } from './stock.ts';
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
 import { RECIPES } from '../data/recipes.ts';
 import { brew, canBrew, isBrewSuccessful } from './brew-check.ts';
+import { formatTime } from './timer.ts';
 import type { IGameState, IIngredient, IRecipe } from '../types.ts';
 
 function check(condition: boolean, message: string): void {
@@ -141,3 +142,7 @@ check(!lost.success, 'wrong mix fails');
 check(lost.state.lives === 2 && lost.state.score === 0, 'failure costs 1 life, no score');
 check(lost.state.activeRecipe === recipe, 'failure keeps the recipe');
 check(lost.state.cauldronIngredients.length === 0, 'failure clears the cauldron');
+
+// Time label.
+check(formatTime(150) === '02:30' && formatTime(0) === '00:00', 'MM:SS format');
+check(formatTime(0.4) === '00:01' && formatTime(-3) === '00:00', 'round up, never negative');
