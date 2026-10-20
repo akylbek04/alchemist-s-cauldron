@@ -28,6 +28,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 
 - [x] Precondition 1 — project setup
 - [x] US 1.1 — ingredient shelf & cauldron
+- [x] US 1.2 — cauldron parameter bars
 
 ## How to play
 
@@ -35,6 +36,8 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion.
 - An ingredient with 0 portions becomes an empty slot and can't be used.
 - The cauldron holds up to 4 ingredients in the order they were added. When it is full (**Ingredients: 4 / 4**), the shelf is blocked.
+- The 3 bars show the cauldron's **Temperature**, **Density** and **Magic Power** (the sum of the added ingredients, starting at 0 / 0 / 0). The center line of Temperature and Density is 0; negative values go left.
+- The highlighted zone on each bar is the current recipe's target range, and the white marker is the current value. A bar glows green when its value is inside the target range.
 
 ## Project structure
 

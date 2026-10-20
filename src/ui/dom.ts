@@ -19,9 +19,12 @@ export function createElement<K extends keyof HTMLElementTagNameMap>(
   return element;
 }
 
-// "+25", "−18" (real minus sign), "0".
+// "−18" with a real minus sign.
+export function formatNumber(value: number): string {
+  return value < 0 ? `−${String(Math.abs(value))}` : String(value);
+}
+
+// "+25", "−18", "0".
 export function formatSigned(value: number): string {
-  if (value > 0) return `+${String(value)}`;
-  if (value < 0) return `−${String(Math.abs(value))}`;
-  return '0';
+  return value > 0 ? `+${String(value)}` : formatNumber(value);
 }
