@@ -2,7 +2,9 @@ import { isInRange } from '../logic/cauldron.ts';
 import type { ICauldronValues, IParameter, IRecipe } from '../types.ts';
 import { createElement, formatNumber, formatSigned } from './dom.ts';
 
-export type UpdateBars = (values: ICauldronValues, recipe: IRecipe) => void;
+export type UpdateBars = (values: ICauldronValues, recipe: IRecipe | null) => void;
+
+const TICK_COUNT = 5;
 
 // Position of a value on the bar in %, clamped so off-scale values stay at the edge.
 function toPercent(value: number, parameter: IParameter): number {
@@ -14,15 +16,28 @@ function percent(value: number): string {
   return `${String(value)}%`;
 }
 
-function createBar(parameter: IParameter): {
-  element: HTMLElement;
-  update: UpdateBars;
-} {
+function createTicks(parameter: IParameter): HTMLElement {
+  const ticks = createElement('div', 'bar__ticks');
+  ticks.setAttribute('aria-hidden', 'true');
+  const step = (parameter.max - parameter.min) / (TICK_COUNT - 1);
+  for (let i = 0; i < TICK_COUNT; i++) {
+    const value = parameter.min + step * i;
+    const tick = createElement('span', 'bar__tick', formatNumber(value));
+    tick.style.left = percent(toPercent(value, parameter));
+    ticks.append(tick);
+  }
+  return ticks;
+}
+
+function createBar(parameter: IParameter): { element: HTMLElement; update: UpdateBars } {
   const element = createElement('div', `bar bar--${parameter.key}`);
-  const target = createElement('span', 'bar__target');
+  const icon = createElement('img', 'bar__icon');
+  icon.src = parameter.icon;
+  icon.alt = '';
+
   const value = createElement('span', 'bar__value');
   const header = createElement('div', 'bar__header');
-  header.append(createElement('span', 'bar__label', parameter.label), target, value);
+  header.append(createElement('span', 'bar__label', parameter.label), value);
 
   const track = createElement('div', 'bar__track');
   track.setAttribute('role', 'meter');
@@ -31,40 +46,41 @@ function createBar(parameter: IParameter): {
   track.setAttribute('aria-valuemax', String(parameter.max));
 
   const zone = createElement('div', 'bar__zone');
-  const fill = createElement('div', 'bar__fill');
   const marker = createElement('div', 'bar__marker');
-  track.append(zone, fill);
+  track.append(zone);
   if (parameter.min < 0) {
     const zeroLine = createElement('div', 'bar__zero');
     zeroLine.style.left = percent(toPercent(0, parameter));
     track.append(zeroLine);
   }
   track.append(marker);
-  element.append(header, track);
 
-  const zero = toPercent(0, parameter);
+  const body = createElement('div', 'bar__body');
+  body.append(header, track, createTicks(parameter));
+  element.append(icon, body);
 
   return {
     element,
     update: (values, recipe): void => {
       const current = values[parameter.key];
-      const range = recipe[parameter.key];
-      const at = toPercent(current, parameter);
-      const zoneStart = toPercent(range.min, parameter);
+      const range = recipe?.[parameter.key];
+      marker.style.left = percent(toPercent(current, parameter));
+      value.textContent = formatSigned(current);
+      track.setAttribute('aria-valuenow', String(current));
 
+      zone.hidden = !range;
+      element.classList.toggle('bar--in-range', range ? isInRange(current, range) : false);
+      if (!range) {
+        track.setAttribute('aria-valuetext', formatSigned(current));
+        return;
+      }
+      const zoneStart = toPercent(range.min, parameter);
       zone.style.left = percent(zoneStart);
       zone.style.width = percent(toPercent(range.max, parameter) - zoneStart);
-      // The fill grows from 0, so negative values extend left of the center line.
-      fill.style.left = percent(Math.min(zero, at));
-      fill.style.width = percent(Math.abs(at - zero));
-      marker.style.left = percent(at);
-
-      const rangeText = `${formatNumber(range.min)}..${formatNumber(range.max)}`;
-      value.textContent = formatSigned(current);
-      target.textContent = `target ${rangeText}`;
-      element.classList.toggle('bar--in-range', isInRange(current, range));
-      track.setAttribute('aria-valuenow', String(current));
-      track.setAttribute('aria-valuetext', `${formatSigned(current)}, target ${rangeText}`);
+      track.setAttribute(
+        'aria-valuetext',
+        `${formatSigned(current)}, target ${formatNumber(range.min)} to ${formatNumber(range.max)}`,
+      );
     },
   };
 }
