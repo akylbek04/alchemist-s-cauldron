@@ -5,7 +5,8 @@ import { createStock, MAX_STOCK, MIN_STOCK } from './stock.ts';
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
 import { RECIPES } from '../data/recipes.ts';
 import { brew, canBrew, isBrewSuccessful } from './brew-check.ts';
-import { formatTime } from './timer.ts';
+import { getGameOverReason, isOutOfIngredients } from './game-over.ts';
+import { formatTime, getEndTime, getTimeLeft } from './timer.ts';
 import type { IGameState, IIngredient, IRecipe } from '../types.ts';
 
 function check(condition: boolean, message: string): void {
@@ -47,6 +48,7 @@ check(high.a === MAX_STOCK, `max stock should be ${String(MAX_STOCK)}, got ${Str
 
 // Add: keeps order, spends stock, allows repeats while stock > 0.
 let state: IGameState = {
+  status: 'playing',
   score: 0,
   timeLeft: 150,
   lives: 3,
@@ -65,6 +67,7 @@ check(addIngredient(state, tears, 4) === state, 'empty ingredient must be ignore
 
 // Full cauldron: ignored, stock untouched.
 const full: IGameState = {
+  status: 'playing',
   score: 0,
   timeLeft: 150,
   lives: 3,
@@ -120,6 +123,7 @@ check(
 
 const next: IRecipe = { ...recipe, id: 'next' };
 const brewing: IGameState = {
+  status: 'playing',
   score: 0,
   timeLeft: 145,
   lives: 3,
@@ -146,3 +150,20 @@ check(lost.state.cauldronIngredients.length === 0, 'failure clears the cauldron'
 // Time label.
 check(formatTime(150) === '02:30' && formatTime(0) === '00:00', 'MM:SS format');
 check(formatTime(0.4) === '00:01' && formatTime(-3) === '00:00', 'round up, never negative');
+
+// Timer from timestamps: 150 s from t=1000 ms ends at 151000 ms.
+const end = getEndTime(150, 1000);
+check(getTimeLeft(end, 1000) === 150, 'full time at start');
+check(getTimeLeft(end, 61000) === 90, '60 s later 90 s are left, however many ticks ran');
+check(getTimeLeft(end, 999999) === 0, 'never below 0');
+
+// Game over: lives first, then time, then ingredients.
+check(getGameOverReason(brewing) === null, 'running game is not over');
+check(getGameOverReason({ ...brewing, lives: 0 }) === 'lives', 'no lives');
+check(getGameOverReason({ ...brewing, timeLeft: 0 }) === 'time', 'time is up');
+const drained: IGameState = { ...brewing, cauldronIngredients: [], shelfStock: { a: 0, b: 0 } };
+check(isOutOfIngredients(drained) && getGameOverReason(drained) === 'ingredients', 'out of stock');
+check(
+  !isOutOfIngredients({ ...drained, cauldronIngredients: [tears] }),
+  'an empty shelf with a full cauldron can still be brewed',
+);
