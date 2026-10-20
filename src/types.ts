@@ -30,6 +30,8 @@ export interface IRecipe {
 export interface IParameter {
   key: ParameterKey;
   label: string;
+  short: string; // "T", "D", "MP" on the shelf cards
+  icon: string;
   // Bar scale. A negative min puts 0 on the center line.
   min: number;
   max: number;
