@@ -31,6 +31,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 1.2 — cauldron parameter bars
 - [x] US 1.3 — recipe & brewing check
 - [x] US 1.4 — timer & game over
+- [x] US 1.5 — pause
 
 ## How to play
 
@@ -45,6 +46,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
   - Failure: **−1 life**.
   - Either way the cauldron is cleared and the used ingredients are spent.
 - The game starts with **150 s** and **3 lives** (hearts in the top bar). The timer shows `MM:SS` and a shrinking bar, and turns red and pulses under **15 s**. It is calculated from timestamps, so it stays correct in a background tab.
+- Press the **Pause** button next to the timer to stop the game: the timer stops, the field is blurred and the shelf and Brew are blocked. **Resume** continues the same game, **Exit to Menu** goes back to the start screen. The game also pauses by itself when the browser tab is hidden.
 - The game ends when the time reaches `00:00`, all lives are lost, or the shelf and the cauldron are both empty (**Out of ingredients**). The Game Over screen shows the reason, the final score and **Play again**.
 
 ## Project structure
