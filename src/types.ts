@@ -30,6 +30,8 @@ export interface IRecipe {
 export interface IParameter {
   key: ParameterKey;
   label: string;
+  short: string; // "T", "D", "MP" on the shelf cards
+  icon: string;
   // Bar scale. A negative min puts 0 on the center line.
   min: number;
   max: number;
@@ -38,9 +40,17 @@ export interface IParameter {
 export interface IDifficultySettings {
   shelfSize: number;
   maxCauldronIngredients: number;
+  startTime: number; // seconds
+  tolerance: number;
+  lives: number;
+  scorePerBrew: number;
+  timeBonus: number; // seconds
 }
 
 export interface IGameState {
+  score: number;
+  timeLeft: number; // seconds
+  lives: number;
   activeRecipe: IRecipe;
   cauldronIngredients: IIngredient[];
   shelfStock: Record<string, number>; // ingredient id -> portions left

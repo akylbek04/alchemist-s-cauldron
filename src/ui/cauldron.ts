@@ -1,12 +1,7 @@
-import type { IIngredient } from '../types';
-import { createElement } from './dom';
+import type { IIngredient } from '../types.ts';
+import { createElement } from './dom.ts';
 
-export function renderCauldron(
-  list: HTMLElement,
-  counter: HTMLElement,
-  ingredients: readonly IIngredient[],
-  maxIngredients: number,
-): void {
+export function renderCauldron(list: HTMLElement, ingredients: readonly IIngredient[]): void {
   list.replaceChildren(
     ...ingredients.map((ingredient) => {
       const item = createElement('li', 'cauldron__item');
@@ -17,6 +12,4 @@ export function renderCauldron(
       return item;
     }),
   );
-  counter.textContent = `Ingredients: ${String(ingredients.length)} / ${String(maxIngredients)}`;
-  counter.classList.toggle('counter--full', ingredients.length >= maxIngredients);
 }

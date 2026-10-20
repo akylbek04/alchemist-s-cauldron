@@ -29,15 +29,20 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] Precondition 1 — project setup
 - [x] US 1.1 — ingredient shelf & cauldron
 - [x] US 1.2 — cauldron parameter bars
+- [x] US 1.3 — recipe & brewing check
 
 ## How to play
 
-- The shelf shows 6 ingredients. Each card shows its **Temperature**, **Density** and **Magic Power** and a badge with the portions left (random 2–15 per game).
-- Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion.
-- An ingredient with 0 portions becomes an empty slot and can't be used.
-- The cauldron holds up to 4 ingredients in the order they were added. When it is full (**Ingredients: 4 / 4**), the shelf is blocked.
-- The 3 bars show the cauldron's **Temperature**, **Density** and **Magic Power** (the sum of the added ingredients, starting at 0 / 0 / 0). The center line of Temperature and Density is 0; negative values go left.
-- The highlighted zone on each bar is the current recipe's target range, and the white marker is the current value. A bar glows green when its value is inside the target range.
+- The start screen shows an empty shelf and cauldron, score and time `0` and no lives. Press **Start Game** (or **Help** for the rules).
+- The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
+- The shelf shows 6 ingredients. Each card shows its **T**emperature, **D**ensity and **M**agic **P**ower and a badge with the portions left (random 2–15 per game).
+- Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
+- The cauldron holds up to 4 ingredients. When it is full (**4 / 4**, highlighted), the shelf is blocked.
+- The 3 bars show the cauldron's values (the sum of the added ingredients, starting at 0 / 0 / 0). The green zone is the recipe's target range, the diamond is the current value, and a bar glows when its value is inside the range. Temperature and Density can go negative: `0` is the center.
+- Press **Brew**. Each value may miss its range by up to **±8**.
+  - Success: **+200** points, **+10 s** (never above 150 s) and a new random recipe.
+  - Failure: **−1 life**.
+  - Either way the cauldron is cleared and the used ingredients are spent.
 
 ## Project structure
 

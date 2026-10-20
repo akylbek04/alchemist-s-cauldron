@@ -1,4 +1,4 @@
-import type { IRecipe } from '../types';
+import type { IRecipe } from '../types.ts';
 
 // The 20 recipes from the task README.
 export const RECIPES: readonly IRecipe[] = [

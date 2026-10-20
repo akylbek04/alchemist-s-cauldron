@@ -1,4 +1,4 @@
-import type { IIngredient } from '../types';
+import type { IIngredient } from '../types.ts';
 import dragonTears from '../assets/icons/dragon-tears.svg';
 import fairyDust from '../assets/icons/fairy-dust.svg';
 import frostLotus from '../assets/icons/frost-lotus.svg';

@@ -1,4 +1,4 @@
-import type { ICauldronValues, IGameState, IIngredient, IRecipeRange } from '../types';
+import type { ICauldronValues, IGameState, IIngredient, IRecipeRange } from '../types.ts';
 
 export function isCauldronFull(state: IGameState, maxIngredients: number): boolean {
   return state.cauldronIngredients.length >= maxIngredients;

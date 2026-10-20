@@ -4,28 +4,89 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alchemist's Cauldron</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <header class="header">
-      <h1 class="header__title">Alchemist's Cauldron</h1>
-    </header>
-
-    <main class="game">
-      <section class="panel shelf" aria-labelledby="shelf-title">
-        <h2 class="panel__title" id="shelf-title">Ingredient Shelf</h2>
-        <div class="shelf__grid" id="shelf"></div>
-      </section>
-
-      <section class="panel cauldron" aria-labelledby="cauldron-title">
-        <div class="cauldron__header">
-          <h2 class="panel__title" id="cauldron-title">Cauldron</h2>
-          <p class="counter" id="ingredient-counter" aria-live="polite"></p>
+    <div class="app">
+      <header class="hud">
+        <div class="hud__group hud__group--score">
+          <img class="hud__icon" src="/src/assets/icons/score.svg" alt="" />
+          <span class="hud__label">Score:</span>
+          <span class="hud__value" id="score">0</span>
         </div>
-        <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
-        <div class="bars" id="bars"></div>
-        <ol class="cauldron__list" id="cauldron-list"></ol>
-      </section>
-    </main>
+        <div class="hud__group hud__group--time">
+          <img class="hud__icon" src="/src/assets/icons/clock.svg" alt="" />
+          <span class="hud__label">Time:</span>
+          <span class="hud__value" id="time">00:00</span>
+        </div>
+        <div class="hud__group hud__group--lives" id="lives" role="img"></div>
+      </header>
+
+      <h1 class="title">Alchemist's Cauldron</h1>
+
+      <main class="game">
+        <section class="panel shelf" aria-labelledby="shelf-title">
+          <h2 class="panel__title" id="shelf-title">Ingredients</h2>
+          <div class="shelf__list" id="shelf"></div>
+        </section>
+
+        <section class="cauldron" aria-label="Cauldron">
+          <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
+          <ol class="cauldron__list" id="cauldron-list" aria-label="In the cauldron"></ol>
+          <p class="message" id="message" role="status"></p>
+        </section>
+
+        <section class="recipe" aria-labelledby="recipe-name">
+          <p class="recipe__eyebrow">Current Recipe</p>
+          <h2 class="recipe__name" id="recipe-name"></h2>
+          <p class="counter" id="ingredient-counter"></p>
+          <dl class="recipe__ranges" id="recipe-ranges"></dl>
+          <p class="recipe__note" id="recipe-note"></p>
+        </section>
+
+        <section class="bars" id="bars" aria-label="Cauldron values"></section>
+      </main>
+
+      <footer class="controls">
+        <button class="round-button" id="help-button" type="button">
+          <img class="round-button__icon" src="/src/assets/icons/help.svg" alt="" />
+          <span>Help</span>
+        </button>
+        <button class="main-button" id="start-button" type="button">Start Game</button>
+        <button class="main-button" id="brew-button" type="button" hidden>Brew</button>
+        <span class="controls__spacer" aria-hidden="true"></span>
+      </footer>
+    </div>
+
+    <dialog class="dialog" id="help-dialog" aria-labelledby="help-title">
+      <h2 class="dialog__title" id="help-title">How to Brew</h2>
+      <ol class="dialog__list">
+        <li>Press <strong>Start Game</strong>. A random recipe appears in the recipe book.</li>
+        <li>
+          Click ingredients on the shelf to add them to the cauldron. You may add up to
+          <strong>4</strong>. Each ingredient has a limited stock.
+        </li>
+        <li>
+          Watch the <strong>Temperature</strong>, <strong>Density</strong> and
+          <strong>Magic Power</strong> bars. Try to move every marker into its green zone.
+        </li>
+        <li>
+          Press <strong>Brew</strong>. Each value may miss its range by up to <strong>±8</strong>.
+        </li>
+        <li>
+          Success: <strong>+200</strong> points, <strong>+10 s</strong> and a new recipe. Failure:
+          you lose <strong>1 life</strong>. Used ingredients are spent either way.
+        </li>
+      </ol>
+      <form method="dialog">
+        <button class="main-button main-button--small" type="submit">Close</button>
+      </form>
+    </dialog>
 
     <script type="module" src="/src/main.ts"></script>
   </body>
