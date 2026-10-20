@@ -1,12 +1,12 @@
 import './styles/style.css';
-import { DIFFICULTY_SETTINGS, LEVEL_1_DIFFICULTY } from './data/difficulty';
-import { PARAMETERS } from './data/parameters';
-import { addIngredient, calculateCauldron, isCauldronFull } from './logic/cauldron';
-import { createGameState, getShelfIngredients } from './state/game-state';
-import { createBars } from './ui/bars';
-import { renderCauldron } from './ui/cauldron';
-import { getElement } from './ui/dom';
-import { createShelf } from './ui/shelf';
+import { DIFFICULTY_SETTINGS, LEVEL_1_DIFFICULTY } from './data/difficulty.ts';
+import { PARAMETERS } from './data/parameters.ts';
+import { addIngredient, calculateCauldron, isCauldronFull } from './logic/cauldron.ts';
+import { createGameState, getShelfIngredients } from './state/game-state.ts';
+import { createBars } from './ui/bars.ts';
+import { renderCauldron } from './ui/cauldron.ts';
+import { getElement } from './ui/dom.ts';
+import { createShelf } from './ui/shelf.ts';
 
 const settings = DIFFICULTY_SETTINGS[LEVEL_1_DIFFICULTY];
 const cauldronList = getElement('#cauldron-list');

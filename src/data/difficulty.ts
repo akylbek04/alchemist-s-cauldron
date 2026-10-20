@@ -1,4 +1,4 @@
-import type { Difficulty, IDifficultySettings } from '../types';
+import type { Difficulty, IDifficultySettings } from '../types.ts';
 
 export const DIFFICULTY_SETTINGS: Record<Difficulty, IDifficultySettings> = {
   easy: { shelfSize: 4, maxCauldronIngredients: 4 },

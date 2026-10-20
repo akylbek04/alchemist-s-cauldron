@@ -1,5 +1,5 @@
-import type { IIngredient } from '../types';
-import { createElement } from './dom';
+import type { IIngredient } from '../types.ts';
+import { createElement } from './dom.ts';
 
 export function renderCauldron(
   list: HTMLElement,

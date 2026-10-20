@@ -1,4 +1,4 @@
-import type { Difficulty, IRecipe } from '../types';
+import type { Difficulty, IRecipe } from '../types.ts';
 
 export function getRecipesByDifficulty(
   recipes: readonly IRecipe[],

@@ -1,5 +1,5 @@
-import type { IIngredient } from '../types';
-import { createElement, formatSigned } from './dom';
+import type { IIngredient } from '../types.ts';
+import { createElement, formatSigned } from './dom.ts';
 
 export type UpdateShelf = (stock: Record<string, number>, isBlocked: boolean) => void;
 

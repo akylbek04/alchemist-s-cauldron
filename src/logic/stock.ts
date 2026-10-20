@@ -1,4 +1,4 @@
-import type { IIngredient } from '../types';
+import type { IIngredient } from '../types.ts';
 
 export const MIN_STOCK = 2;
 export const MAX_STOCK = 15;

@@ -1,6 +1,6 @@
-import { isInRange } from '../logic/cauldron';
-import type { ICauldronValues, IParameter, IRecipe } from '../types';
-import { createElement, formatNumber, formatSigned } from './dom';
+import { isInRange } from '../logic/cauldron.ts';
+import type { ICauldronValues, IParameter, IRecipe } from '../types.ts';
+import { createElement, formatNumber, formatSigned } from './dom.ts';
 
 export type UpdateBars = (values: ICauldronValues, recipe: IRecipe) => void;
 
