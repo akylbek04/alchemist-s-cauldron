@@ -27,6 +27,14 @@ The work is split into stories. Each story is developed in its own branch (`stor
 ## Implemented
 
 - [x] Precondition 1 — project setup
+- [x] US 1.1 — ingredient shelf & cauldron
+
+## How to play
+
+- The shelf shows 6 ingredients. Each card shows its **Temperature**, **Density** and **Magic Power** and a badge with the portions left (random 2–15 per game).
+- Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion.
+- An ingredient with 0 portions becomes an empty slot and can't be used.
+- The cauldron holds up to 4 ingredients in the order they were added. When it is full (**Ingredients: 4 / 4**), the shelf is blocked.
 
 ## Project structure
 
@@ -60,12 +68,13 @@ npm run lint          # ESLint (strict TypeScript rules, no console, no any)
 npm run lint:fix      # ESLint with auto-fix
 npm run format        # format all files with Prettier
 npm run format:check  # check formatting
+npm test              # game logic tests (Node built-in test runner)
 ```
 
 Git hooks (Husky):
 
 - `commit-msg` — the message must follow the RS School convention: `<type>: <description>`, e.g. `feat: add ingredient shelf`. Types: `init`, `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `perf`, `build`, `ci`, `revert`.
-- `pre-push` — runs `lint` and `format:check`; the push is blocked if either fails.
+- `pre-push` — runs `lint`, `format:check` and `test`; the push is blocked if any of them fails.
 
 ## Deploy
 

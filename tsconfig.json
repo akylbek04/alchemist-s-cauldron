@@ -6,6 +6,8 @@
     "moduleResolution": "bundler",
     "types": ["vite/client"],
     "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,

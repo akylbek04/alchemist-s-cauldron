@@ -1,7 +1,32 @@
 import './styles/style.css';
+import { DIFFICULTY_SETTINGS, LEVEL_1_DIFFICULTY } from './data/difficulty';
+import { addIngredient, isCauldronFull } from './logic/cauldron';
+import { createGameState, getShelfIngredients } from './state/game-state';
+import { renderCauldron } from './ui/cauldron';
+import { getElement } from './ui/dom';
+import { createShelf } from './ui/shelf';
 
-const app = document.querySelector<HTMLDivElement>('#app');
+const settings = DIFFICULTY_SETTINGS[LEVEL_1_DIFFICULTY];
+const cauldronList = getElement('#cauldron-list');
+const counter = getElement('#ingredient-counter');
 
-if (app) {
-  app.textContent = "Alchemist's Cauldron";
+// Temporary: the game starts on load until the Start Game screen arrives in US 1.3.
+let state = createGameState(settings);
+
+const updateShelf = createShelf(
+  getElement('#shelf'),
+  getShelfIngredients(settings),
+  (ingredient) => {
+    const next = addIngredient(state, ingredient, settings.maxCauldronIngredients);
+    if (next === state) return;
+    state = next;
+    render();
+  },
+);
+
+function render(): void {
+  updateShelf(state.shelfStock, isCauldronFull(state, settings.maxCauldronIngredients));
+  renderCauldron(cauldronList, counter, state.cauldronIngredients, settings.maxCauldronIngredients);
 }
+
+render();
