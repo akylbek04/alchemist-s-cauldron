@@ -33,6 +33,9 @@ const shelf = getElement('#shelf');
 const cauldronList = getElement('#cauldron-list');
 const message = getElement('#message');
 const startButton = getElement('#start-button');
+const pauseButton = getElement('#pause-button') as HTMLButtonElement;
+const clockIcon = getElement('#clock-icon');
+const pauseDialog = getElement('#pause-dialog') as HTMLDialogElement;
 const brewButton = getElement('#brew-button') as HTMLButtonElement;
 const helpDialog = getElement('#help-dialog') as HTMLDialogElement;
 
@@ -103,6 +106,32 @@ function checkGameOver(): boolean {
   return true;
 }
 
+function pauseGame(): void {
+  if (state?.status !== 'playing') return;
+  syncTime();
+  state = { ...state, status: 'paused' };
+  stopClock();
+  render();
+  pauseDialog.showModal();
+}
+
+function resumeGame(): void {
+  if (state?.status !== 'paused') return;
+  state = { ...state, status: 'playing' };
+  pauseDialog.close();
+  startClock();
+  render();
+}
+
+function exitToMenu(): void {
+  stopClock();
+  state = null;
+  pauseDialog.close();
+  showMessage('');
+  render();
+  startButton.focus();
+}
+
 function startGame(): void {
   state = createGameState(LEVEL_1_DIFFICULTY);
   startClock();
@@ -136,6 +165,11 @@ function render(): void {
   updateBars(calculateCauldron(ingredients), state?.activeRecipe ?? null);
   updateHud();
 
+  // While paused the play field is blurred, so nothing can be planned.
+  document.body.classList.toggle('is-paused', state?.status === 'paused');
+  pauseButton.hidden = !isPlaying;
+  clockIcon.hidden = isPlaying;
+
   startButton.hidden = state !== null;
   brewButton.hidden = state === null;
   brewButton.disabled = !state || !isPlaying || !canBrew(state);
@@ -165,6 +199,16 @@ brewButton.addEventListener('click', () => {
   }
   render();
   checkGameOver();
+});
+
+pauseButton.addEventListener('click', pauseGame);
+getElement('#resume-button').addEventListener('click', resumeGame);
+getElement('#exit-button').addEventListener('click', exitToMenu);
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    pauseGame();
+  }
 });
 
 getElement('#help-button').addEventListener('click', () => {

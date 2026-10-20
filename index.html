@@ -20,7 +20,10 @@
           <span class="hud__value" id="score">0</span>
         </div>
         <div class="hud__group hud__group--time" id="time-group">
-          <img class="hud__icon" src="/src/assets/icons/clock.svg" alt="" />
+          <button class="pause-button" id="pause-button" type="button" aria-label="Pause" hidden>
+            <img src="/src/assets/icons/pause.svg" alt="" />
+          </button>
+          <img class="hud__icon" id="clock-icon" src="/src/assets/icons/clock.svg" alt="" />
           <div class="hud__time">
             <span class="hud__time-text">
               <span class="hud__label">Time:</span>
@@ -110,6 +113,23 @@
       <p class="game-over__label">Final Score:</p>
       <p class="game-over__score" id="final-score">0</p>
       <button class="main-button" id="play-again-button" type="button">Play again</button>
+    </dialog>
+
+    <dialog
+      class="dialog dialog--pause"
+      id="pause-dialog"
+      aria-labelledby="pause-title"
+      closedby="none"
+    >
+      <h2 class="dialog__title dialog__title--large" id="pause-title">Game Paused</h2>
+      <div class="dialog__actions">
+        <button class="main-button main-button--menu" id="resume-button" type="button">
+          Resume
+        </button>
+        <button class="main-button main-button--menu" id="exit-button" type="button">
+          Exit to Menu
+        </button>
+      </div>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>
