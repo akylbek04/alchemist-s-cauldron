@@ -15,12 +15,12 @@ Built with **TypeScript** and **Vite**, without frameworks or game libraries.
 
 The work is split into stories. Each story is developed in its own branch (`story-1`, `story-2`, …) with task branches merged into it.
 
-| Stage                  | Content                                                                          |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| Precondition 1         | Repository setup, tooling, folder structure and quality checks                   |
-| Level 1 — Basic        | Shelf & cauldron, parameter bars, recipe & brew check, timer, pause, leaderboard |
-| Level 2 — Extended     | Difficulty selection, auto-save and Continue Game                                |
-| Level 3 — Full game    | Drag & drop, tooltip, reactions, Pour Out, visual feedback, keyboard shortcuts  |
+| Stage               | Content                                                                          |
+| ------------------- | -------------------------------------------------------------------------------- |
+| Precondition 1      | Repository setup, tooling, folder structure and quality checks                   |
+| Level 1 — Basic     | Shelf & cauldron, parameter bars, recipe & brew check, timer, pause, leaderboard |
+| Level 2 — Extended  | Difficulty selection, auto-save and Continue Game                                |
+| Level 3 — Full game | Drag & drop, tooltip, reactions, Pour Out, visual feedback, keyboard shortcuts   |
 
 ## Implemented
 
