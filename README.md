@@ -50,3 +50,17 @@ npm run dev       # start the dev server
 npm run build     # type-check and build to dist/
 npm run preview   # preview the production build
 ```
+
+Code quality:
+
+```bash
+npm run lint          # ESLint (strict TypeScript rules, no console, no any)
+npm run lint:fix      # ESLint with auto-fix
+npm run format        # format all files with Prettier
+npm run format:check  # check formatting
+```
+
+Git hooks (Husky):
+
+- `commit-msg` — the message must follow the RS School convention: `<type>: <description>`, e.g. `feat: add ingredient shelf`. Types: `init`, `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `perf`, `build`, `ci`, `revert`.
+- `pre-push` — runs `lint` and `format:check`; the push is blocked if either fails.
