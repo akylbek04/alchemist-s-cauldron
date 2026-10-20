@@ -11,7 +11,7 @@ const cauldronList = getElement('#cauldron-list');
 const counter = getElement('#ingredient-counter');
 
 // Temporary: the game starts on load until the Start Game screen arrives in US 1.3.
-let state = createGameState(settings);
+let state = createGameState(LEVEL_1_DIFFICULTY);
 
 const updateShelf = createShelf(
   getElement('#shelf'),
