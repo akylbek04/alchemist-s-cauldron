@@ -4,6 +4,8 @@ A browser puzzle game: mix ingredients in a cauldron, move **Temperature**, **De
 
 Built with **TypeScript** and **Vite**, without frameworks or game libraries.
 
+**Play:** https://akylbek04.github.io/alchemist-s-cauldron/
+
 ## Game goal
 
 1. A random recipe is picked. It shows 3 target ranges and how many ingredients you may use.
@@ -73,3 +75,7 @@ Git hooks (Husky):
 
 - `commit-msg` — the message must follow the RS School convention: `<type>: <description>`, e.g. `feat: add ingredient shelf`. Types: `init`, `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `perf`, `build`, `ci`, `revert`.
 - `pre-push` — runs `lint`, `format:check` and `test`; the push is blocked if any of them fails.
+
+## Deploy
+
+Every push to a `story-*` branch builds the game and deploys it to GitHub Pages (`.github/workflows/deploy.yml`). The final story PRs stay unmerged, so `main` is never deployed.
