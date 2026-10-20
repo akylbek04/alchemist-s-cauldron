@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+
+# logs
+*.log
+
+# env
+.env
+.env.*
+
+# editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
