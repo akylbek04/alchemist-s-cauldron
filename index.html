@@ -6,7 +6,26 @@
     <title>Alchemist's Cauldron</title>
   </head>
   <body>
-    <div id="app"></div>
+    <header class="header">
+      <h1 class="header__title">Alchemist's Cauldron</h1>
+    </header>
+
+    <main class="game">
+      <section class="panel shelf" aria-labelledby="shelf-title">
+        <h2 class="panel__title" id="shelf-title">Ingredient Shelf</h2>
+        <div class="shelf__grid" id="shelf"></div>
+      </section>
+
+      <section class="panel cauldron" aria-labelledby="cauldron-title">
+        <div class="cauldron__header">
+          <h2 class="panel__title" id="cauldron-title">Cauldron</h2>
+          <p class="counter" id="ingredient-counter" aria-live="polite"></p>
+        </div>
+        <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
+        <ol class="cauldron__list" id="cauldron-list"></ol>
+      </section>
+    </main>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
