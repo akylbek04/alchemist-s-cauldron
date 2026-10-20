@@ -19,10 +19,17 @@
           <span class="hud__label">Score:</span>
           <span class="hud__value" id="score">0</span>
         </div>
-        <div class="hud__group hud__group--time">
+        <div class="hud__group hud__group--time" id="time-group">
           <img class="hud__icon" src="/src/assets/icons/clock.svg" alt="" />
-          <span class="hud__label">Time:</span>
-          <span class="hud__value" id="time">00:00</span>
+          <div class="hud__time">
+            <span class="hud__time-text">
+              <span class="hud__label">Time:</span>
+              <span class="hud__value" id="time">00:00</span>
+            </span>
+            <span class="time-bar" aria-hidden="true">
+              <span class="time-bar__fill" id="time-bar"></span>
+            </span>
+          </div>
         </div>
         <div class="hud__group hud__group--lives" id="lives" role="img"></div>
       </header>
@@ -82,10 +89,27 @@
           Success: <strong>+200</strong> points, <strong>+10 s</strong> and a new recipe. Failure:
           you lose <strong>1 life</strong>. Used ingredients are spent either way.
         </li>
+        <li>
+          The game ends when the time runs out, you lose all <strong>3</strong> lives, or the shelf
+          and the cauldron are both empty.
+        </li>
       </ol>
       <form method="dialog">
         <button class="main-button main-button--small" type="submit">Close</button>
       </form>
+    </dialog>
+
+    <dialog
+      class="dialog dialog--game-over"
+      id="game-over-dialog"
+      aria-labelledby="game-over-title"
+      closedby="none"
+    >
+      <h2 class="dialog__title dialog__title--large" id="game-over-title">Game Over</h2>
+      <p class="game-over__reason" id="game-over-reason"></p>
+      <p class="game-over__label">Final Score:</p>
+      <p class="game-over__score" id="final-score">0</p>
+      <button class="main-button" id="play-again-button" type="button">Play again</button>
     </dialog>
 
     <script type="module" src="/src/main.ts"></script>
