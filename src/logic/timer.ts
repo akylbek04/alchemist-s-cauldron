@@ -5,3 +5,12 @@ export function formatTime(seconds: number): string {
   const rest = total % 60;
   return `${String(minutes).padStart(2, '0')}:${String(rest).padStart(2, '0')}`;
 }
+
+// Remaining seconds from a timestamp, so ticks can be late or skipped (background tab).
+export function getTimeLeft(endTime: number, now: number): number {
+  return Math.max(0, (endTime - now) / 1000);
+}
+
+export function getEndTime(timeLeft: number, now: number): number {
+  return now + timeLeft * 1000;
+}
