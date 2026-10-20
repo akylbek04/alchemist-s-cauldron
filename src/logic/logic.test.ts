@@ -2,7 +2,9 @@
 import { addIngredient, calculateCauldron, isCauldronFull, isInRange } from './cauldron.ts';
 import { getRecipesByDifficulty, pickRandom } from './recipe-generator.ts';
 import { createStock, MAX_STOCK, MIN_STOCK } from './stock.ts';
+import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
 import { RECIPES } from '../data/recipes.ts';
+import { brew, canBrew, isBrewSuccessful } from './brew-check.ts';
 import type { IGameState, IIngredient, IRecipe } from '../types.ts';
 
 function check(condition: boolean, message: string): void {
@@ -44,6 +46,9 @@ check(high.a === MAX_STOCK, `max stock should be ${String(MAX_STOCK)}, got ${Str
 
 // Add: keeps order, spends stock, allows repeats while stock > 0.
 let state: IGameState = {
+  score: 0,
+  timeLeft: 150,
+  lives: 3,
   activeRecipe: recipe,
   cauldronIngredients: [],
   shelfStock: { a: 2, b: 1 },
@@ -59,6 +64,9 @@ check(addIngredient(state, tears, 4) === state, 'empty ingredient must be ignore
 
 // Full cauldron: ignored, stock untouched.
 const full: IGameState = {
+  score: 0,
+  timeLeft: 150,
+  lives: 3,
   activeRecipe: recipe,
   cauldronIngredients: [tears, tears],
   shelfStock: { a: 5 },
@@ -96,3 +104,40 @@ check(
   RECIPES.every((r) => [r.temperature, r.density, r.magicPower].every((x) => x.min < x.max)),
   'every range must have min < max',
 );
+
+// Brew check, README worked example: Moon Mist ±8 -> 24..50 / 4..30 / 9..35.
+const medium = DIFFICULTY_SETTINGS.medium;
+check(isBrewSuccessful(mix, recipe, medium.tolerance), '37/17/22 must pass Moon Mist ±8');
+check(
+  isBrewSuccessful({ temperature: 50, density: 4, magicPower: 35 }, recipe, 8),
+  'tolerance edges pass',
+);
+check(
+  !isBrewSuccessful({ temperature: 51, density: 17, magicPower: 22 }, recipe, 8),
+  'one value outside fails',
+);
+
+const next: IRecipe = { ...recipe, id: 'next' };
+const brewing: IGameState = {
+  score: 0,
+  timeLeft: 145,
+  lives: 3,
+  activeRecipe: recipe,
+  cauldronIngredients: [tears, dust],
+  shelfStock: { a: 1, b: 1 },
+};
+check(canBrew(brewing) && !canBrew({ ...brewing, cauldronIngredients: [] }), 'brew needs 1+');
+
+const won = brew(brewing, medium, () => next);
+check(won.success, 'worked example brews');
+check(won.state.score === 200, 'success adds 200');
+check(won.state.timeLeft === 150, 'time bonus is capped at the start time (145 + 10 -> 150)');
+check(won.state.activeRecipe === next, 'success picks a new recipe');
+check(won.state.cauldronIngredients.length === 0, 'success clears the cauldron');
+check(won.state.shelfStock.a === 1 && won.state.lives === 3, 'stock and lives untouched');
+
+const lost = brew({ ...brewing, cauldronIngredients: [frost] }, medium, () => next);
+check(!lost.success, 'wrong mix fails');
+check(lost.state.lives === 2 && lost.state.score === 0, 'failure costs 1 life, no score');
+check(lost.state.activeRecipe === recipe, 'failure keeps the recipe');
+check(lost.state.cauldronIngredients.length === 0, 'failure clears the cauldron');

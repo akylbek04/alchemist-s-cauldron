@@ -38,9 +38,17 @@ export interface IParameter {
 export interface IDifficultySettings {
   shelfSize: number;
   maxCauldronIngredients: number;
+  startTime: number; // seconds
+  tolerance: number;
+  lives: number;
+  scorePerBrew: number;
+  timeBonus: number; // seconds
 }
 
 export interface IGameState {
+  score: number;
+  timeLeft: number; // seconds
+  lives: number;
   activeRecipe: IRecipe;
   cauldronIngredients: IIngredient[];
   shelfStock: Record<string, number>; // ingredient id -> portions left
