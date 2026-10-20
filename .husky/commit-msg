@@ -1,0 +1,10 @@
+# RS School commit convention: "type: short description" (lowercase type, optional scope)
+msg=$(head -n1 "$1")
+pattern='^(init|feat|fix|refactor|docs|style|test|chore|perf|build|ci|revert)(\([a-z0-9-]+\))?: [^ ].{1,}$'
+
+if ! printf '%s' "$msg" | grep -qE "$pattern" && ! printf '%s' "$msg" | grep -qE '^(Merge|Revert) '; then
+  echo "Invalid commit message: \"$msg\""
+  echo "Expected: <type>: <description>, e.g. \"feat: add ingredient shelf\""
+  echo "Types: init, feat, fix, refactor, docs, style, test, chore, perf, build, ci, revert"
+  exit 1
+fi
