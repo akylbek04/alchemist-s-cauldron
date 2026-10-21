@@ -6,8 +6,16 @@ import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
 import { RECIPES } from '../data/recipes.ts';
 import { brew, canBrew, isBrewSuccessful } from './brew-check.ts';
 import { getGameOverReason, isOutOfIngredients } from './game-over.ts';
+import {
+  addEntry,
+  formatDate,
+  isValidName,
+  parseEntries,
+  qualifies,
+  sortEntries,
+} from './leaderboard.ts';
 import { formatTime, getEndTime, getTimeLeft } from './timer.ts';
-import type { IGameState, IIngredient, IRecipe } from '../types.ts';
+import type { IGameState, IIngredient, ILeaderboardEntry, IRecipe } from '../types.ts';
 
 function check(condition: boolean, message: string): void {
   if (!condition) {
@@ -167,3 +175,57 @@ check(
   !isOutOfIngredients({ ...drained, cauldronIngredients: [tears] }),
   'an empty shelf with a full cauldron can still be brewed',
 );
+
+// Leaderboard: sort by score, ties keep the earlier result higher, Top-10 only.
+const entry = (name: string, score: number, date: number): ILeaderboardEntry => ({
+  name,
+  score,
+  date,
+});
+const sorted = sortEntries([entry('Late', 500, 2), entry('Best', 900, 3), entry('Early', 500, 1)]);
+check(sorted.map((e) => e.name).join() === 'Best,Early,Late', 'score desc, then earlier first');
+
+const ten = Array.from({ length: 10 }, (_, i) => entry(`P${String(i)}`, 1000 - i * 100, i));
+check(addEntry(ten, entry('New', 5000, 99)).length === 10, 'never more than 10');
+check(addEntry(ten, entry('New', 5000, 99))[0]?.name === 'New', 'a top score goes first');
+check(!addEntry(ten, entry('Low', 50, 99)).some((e) => e.name === 'Low'), 'low score drops out');
+
+// Qualifying: the 10th place has 100 points.
+check(qualifies([], 10) && !qualifies([], 0), 'empty board takes any score above 0');
+check(qualifies(ten, 101) && !qualifies(ten, 100), 'must beat the 10th place, a tie stays out');
+check(qualifies(ten.slice(0, 9), 1), 'free place available');
+
+// Names: 2-15 chars, letters, digits, space, _ and -.
+for (const ok of [
+  'Al',
+  'MagusPrime',
+  'Mag_Prime-1',
+  'Ivan Petrov',
+  'Ålchemist',
+  '  Bo  ',
+  'A'.repeat(15),
+]) {
+  check(isValidName(ok), `"${ok}" should be valid`);
+}
+for (const bad of ['', 'A', '   ', 'A'.repeat(16), 'Bad!', '<b>x</b>', 'semi;colon']) {
+  check(!isValidName(bad), `"${bad}" should be invalid`);
+}
+
+// Date: DD.MM.YYYY HH:MM (local time, so build the timestamp in local time too).
+check(formatDate(new Date(2026, 9, 2, 12, 0).getTime()) === '02.10.2026 12:00', 'date format');
+check(formatDate(new Date(2026, 0, 5, 9, 7).getTime()) === '05.01.2026 09:07', 'zero padding');
+
+// Broken storage data never throws and keeps only valid entries.
+check(parseEntries(null).length === 0 && parseEntries('x').length === 0, 'non-array is empty');
+check(parseEntries({ length: 3 }).length === 0, 'array-like object is empty');
+const mixed = parseEntries([
+  entry('Good', 300, 1),
+  { name: 'NoScore', date: 1 },
+  { name: 'X', score: 10, date: 1 },
+  { name: 'Neg', score: -5, date: 1 },
+  { name: 'Nan', score: Number.NaN, date: 1 },
+  null,
+  'text',
+  entry('Also', 400, 2),
+]);
+check(mixed.map((e) => e.name).join() === 'Also,Good', 'only valid entries, sorted');
