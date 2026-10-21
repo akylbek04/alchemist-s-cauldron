@@ -34,6 +34,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 1.5 — pause
 - [x] US 1.6 — leaderboard (Top-10)
 - [x] US 2.1 — difficulty selection
+- [x] US 2.2 — auto-save & continue game
 
 Level 1 is complete.
 
@@ -66,6 +67,7 @@ Level 1 is complete.
   - Either way the cauldron is cleared and the used ingredients are spent.
 - The game starts with **150 s** and **3 lives** (hearts in the top bar). The timer shows `MM:SS` and a shrinking bar, and turns red and pulses under **15 s**. It is calculated from timestamps, so it stays correct in a background tab.
 - Press the **Pause** button next to the timer to stop the game: the timer stops, the field is blurred and the shelf and Brew are blocked. **Resume** continues the same game, **Exit to Menu** goes back to the start screen. The game also pauses by itself when the browser tab is hidden.
+- The running game is saved in `localStorage` after every move, on pause and while the timer runs. After a reload, **Continue Game** appears on the start screen. It restores the same difficulty, score, time, lives, recipe, cauldron and stock (not re-rolled) and opens the game paused. A new game overwrites the save; **Exit to Menu** and Game Over delete it. A broken or edited save is checked field by field, deleted, and never offered.
 - The game ends when the time reaches `00:00`, all lives are lost, or the shelf and the cauldron are both empty (**Out of ingredients**). The Game Over screen shows the reason, the final score and **Play again**.
 - If the final score (above 0) makes the Top-10, the Game Over screen asks for a name: 2–15 characters, letters, digits, space, `_` and `-`. The result is saved in `localStorage`.
 - The **Leaderboard** (from the start screen or the Game Over screen) keeps one Top-10 per difficulty, with **Easy / Medium / Hard** tabs. It opens on the current difficulty and shows rank, name, score, difficulty and date (`DD.MM.YYYY HH:MM`), sorted by score; on equal scores the earlier result stays higher. **Clear Leaderboard** clears the shown difficulty and asks for confirmation in an in-app dialog. Broken or blocked storage never crashes the game: the board is just empty.
