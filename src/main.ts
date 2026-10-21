@@ -13,6 +13,7 @@ import { addEntry, isValidName, qualifies } from './logic/leaderboard.ts';
 import { getEndTime, getTimeLeft } from './logic/timer.ts';
 import { createGameState, getShelfIngredients, pickRecipe } from './state/game-state.ts';
 import { clearLeaderboard, loadLeaderboard, saveLeaderboard } from './storage/leaderboard.ts';
+import { clearSave, loadGame, saveGame } from './storage/save-game.ts';
 import type {
   Difficulty,
   IDifficultySettings,
@@ -63,6 +64,8 @@ const shelf = getElement('#shelf');
 const cauldronList = getElement('#cauldron-list');
 const message = getElement('#message');
 const startButton = getElement('#start-button');
+const continueButton = getElement('#continue-button');
+const pauseNote = getElement('#pause-note');
 const pauseButton = getElement('#pause-button') as HTMLButtonElement;
 const clockIcon = getElement('#clock-icon');
 const pauseDialog = getElement('#pause-dialog') as HTMLDialogElement;
@@ -73,6 +76,8 @@ const helpDialog = getElement('#help-dialog') as HTMLDialogElement;
 let state: IGameState | null = null;
 // Chosen in Settings on the start screen; a running game keeps its own state.difficulty.
 let difficulty: Difficulty = DEFAULT_DIFFICULTY;
+// An unfinished game found on page load, offered as Continue Game.
+let savedGame = loadGame();
 // The list shown in the leaderboard dialog.
 let leaderboardDifficulty: Difficulty = DEFAULT_DIFFICULTY;
 
@@ -137,10 +142,19 @@ function syncTime(): void {
   }
 }
 
+// Saves the running or paused game; finished games are cleared in checkGameOver.
+function persist(): void {
+  if (state && state.status !== 'game-over') {
+    saveGame(state);
+  }
+}
+
 function tick(): void {
   syncTime();
   if (!checkGameOver()) {
     updateHud();
+    // Keeps the saved time left fresh in case the page closes without notice.
+    persist();
   }
 }
 
@@ -150,6 +164,7 @@ function checkGameOver(): boolean {
   if (!reason) return false;
   state = { ...state, status: 'game-over' };
   stopClock();
+  clearSave();
   render();
   showGameOver(
     gameOver,
@@ -166,6 +181,7 @@ function pauseGame(): void {
   state = { ...state, status: 'paused' };
   stopClock();
   render();
+  pauseNote.hidden = true;
   pauseDialog.showModal();
 }
 
@@ -179,6 +195,8 @@ function resumeGame(): void {
 
 function exitToMenu(): void {
   stopClock();
+  clearSave();
+  savedGame = null;
   state = null;
   pauseDialog.close();
   showMessage('');
@@ -186,7 +204,21 @@ function exitToMenu(): void {
   startButton.focus();
 }
 
+// Restores the saved stock and recipe as they were, in paused state.
+function continueGame(): void {
+  if (state !== null || !savedGame) return;
+  difficulty = savedGame.difficulty;
+  applyDifficulty();
+  state = { ...savedGame, status: 'paused' };
+  savedGame = null;
+  render();
+  pauseNote.hidden = false;
+  pauseDialog.showModal();
+}
+
 function startGame(): void {
+  // The new game overwrites an old unfinished save on its first render.
+  savedGame = null;
   state = createGameState(difficulty);
   startClock();
   showMessage('');
@@ -231,9 +263,13 @@ function render(): void {
   leaderboardButton.hidden = state !== null;
   brewButton.hidden = state === null;
   brewButton.disabled = !state || !isPlaying || !canBrew(state);
+  continueButton.hidden = state !== null || savedGame === null;
+
+  persist();
 }
 
 startButton.addEventListener('click', startGame);
+continueButton.addEventListener('click', continueGame);
 getElement('#play-again-button').addEventListener('click', startGame);
 
 brewButton.addEventListener('click', () => {
