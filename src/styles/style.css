@@ -811,6 +811,11 @@ button {
   font-size: 1.125rem;
 }
 
+.controls__main {
+  display: grid;
+  gap: 8px;
+}
+
 .controls > .round-button {
   justify-self: start;
 }
@@ -1337,6 +1342,14 @@ button {
   .controls .main-button {
     padding-inline: 12px;
     font-size: 1.25rem;
+  }
+
+  /* Continue Game and Start Game stacked: both fit on one line. */
+  .controls__main:has(#continue-button:not([hidden])) .main-button {
+    padding-block: 8px;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
   }
 
   .leaderboard__table {
