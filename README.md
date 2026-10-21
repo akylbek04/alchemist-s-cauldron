@@ -33,12 +33,28 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 1.4 — timer & game over
 - [x] US 1.5 — pause
 - [x] US 1.6 — leaderboard (Top-10)
+- [x] US 2.1 — difficulty selection
 
 Level 1 is complete.
 
 ## How to play
 
 - The start screen shows an empty shelf and cauldron, score and time `0` and no lives. Press **Start Game** (or **Help** for the rules).
+- **Settings** on the start screen chooses **Easy**, **Medium** (default, the Level 1 rules) or **Hard** for the next game. Every number comes from the difficulty table:
+
+  | Setting        | Easy  | Medium | Hard  |
+  | -------------- | :---: | :----: | :---: |
+  | Shelf          |   4   |   6    |   8   |
+  | Cauldron limit |   4   |   4    |   5   |
+  | Start time     | 180 s | 150 s  | 150 s |
+  | Tolerance      |  ±12  |   ±8   |  ±5   |
+  | Lives          |   5   |   3    |   3   |
+  | Score per brew |  100  |  200   |  300  |
+  | Time bonus     | +15 s | +10 s  | +5 s  |
+  | Reactions (L3) |   0   |   2    |   3   |
+
+  Recipes come only from the chosen difficulty. The difficulty can't be changed during a game. The rest of this list describes **Medium**.
+
 - The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
 - The shelf shows 6 ingredients. Each card shows its **T**emperature, **D**ensity and **M**agic **P**ower and a badge with the portions left (random 2–15 per game).
 - Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
@@ -52,7 +68,7 @@ Level 1 is complete.
 - Press the **Pause** button next to the timer to stop the game: the timer stops, the field is blurred and the shelf and Brew are blocked. **Resume** continues the same game, **Exit to Menu** goes back to the start screen. The game also pauses by itself when the browser tab is hidden.
 - The game ends when the time reaches `00:00`, all lives are lost, or the shelf and the cauldron are both empty (**Out of ingredients**). The Game Over screen shows the reason, the final score and **Play again**.
 - If the final score (above 0) makes the Top-10, the Game Over screen asks for a name: 2–15 characters, letters, digits, space, `_` and `-`. The result is saved in `localStorage`.
-- The **Leaderboard** (from the start screen or the Game Over screen) shows rank, name, score and date (`DD.MM.YYYY HH:MM`), sorted by score; on equal scores the earlier result stays higher. **Clear Leaderboard** asks for confirmation in an in-app dialog. Broken or blocked storage never crashes the game: the board is just empty.
+- The **Leaderboard** (from the start screen or the Game Over screen) keeps one Top-10 per difficulty, with **Easy / Medium / Hard** tabs. It opens on the current difficulty and shows rank, name, score, difficulty and date (`DD.MM.YYYY HH:MM`), sorted by score; on equal scores the earlier result stays higher. **Clear Leaderboard** clears the shown difficulty and asks for confirmation in an in-app dialog. Broken or blocked storage never crashes the game: the board is just empty.
 
 ## Project structure
 
