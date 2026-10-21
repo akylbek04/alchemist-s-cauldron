@@ -1,6 +1,6 @@
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
-export type GameStatus = 'playing' | 'game-over';
+export type GameStatus = 'playing' | 'paused' | 'game-over';
 
 export type GameOverReason = 'time' | 'lives' | 'ingredients';
 
