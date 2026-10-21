@@ -426,6 +426,35 @@ button {
   filter: drop-shadow(0 0 28px rgb(156 255 79 / 30%));
 }
 
+/* Drop zone: shown while a valid card is dragged over the cauldron. */
+.cauldron {
+  border: 2px dashed transparent;
+  border-radius: 16px;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.cauldron--drop {
+  border-color: var(--green);
+  background: radial-gradient(ellipse at 50% 40%, rgb(156 255 79 / 18%), transparent 70%);
+}
+
+.cauldron--drop .cauldron__pot {
+  filter: drop-shadow(0 0 40px rgb(156 255 79 / 75%));
+  transform: scale(1.03);
+}
+
+.cauldron__pot {
+  transition:
+    filter 0.15s,
+    transform 0.15s;
+}
+
+.card[draggable='true'] {
+  cursor: grab;
+}
+
 .cauldron__list {
   display: flex;
   flex-wrap: wrap;

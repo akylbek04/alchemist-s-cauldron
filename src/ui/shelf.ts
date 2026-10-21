@@ -2,6 +2,9 @@ import { PARAMETERS } from '../data/parameters.ts';
 import type { IIngredient } from '../types.ts';
 import { createElement, formatSigned } from './dom.ts';
 
+// Custom type: a drop zone can see it in dragover (data itself is hidden until drop).
+export const DRAG_TYPE = 'application/x-alchemist-ingredient';
+
 export type UpdateShelf = (stock: Record<string, number>, isBlocked: boolean) => void;
 
 interface ICard {
@@ -49,6 +52,15 @@ export function createShelf(
     button.addEventListener('click', () => {
       onAdd(ingredient);
     });
+    button.addEventListener('dragstart', (event) => {
+      // Empty slots, a full cauldron and pause all leave the button disabled.
+      if (button.disabled || !event.dataTransfer) {
+        event.preventDefault();
+        return;
+      }
+      event.dataTransfer.setData(DRAG_TYPE, ingredient.id);
+      event.dataTransfer.effectAllowed = 'copy';
+    });
   }
   root.replaceChildren(...cards.map((card) => card.button));
 
@@ -59,6 +71,7 @@ export function createShelf(
       count.textContent = String(left);
       button.classList.toggle('card--empty', left === 0);
       button.disabled = left === 0 || isBlocked;
+      button.draggable = !button.disabled;
     }
   };
 }
