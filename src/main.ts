@@ -4,14 +4,17 @@ import { PARAMETERS } from './data/parameters.ts';
 import { brew, canBrew } from './logic/brew-check.ts';
 import { addIngredient, calculateCauldron, isCauldronFull } from './logic/cauldron.ts';
 import { getGameOverReason } from './logic/game-over.ts';
+import { addEntry, isValidName, qualifies } from './logic/leaderboard.ts';
 import { getEndTime, getTimeLeft } from './logic/timer.ts';
 import { createGameState, getShelfIngredients, pickRecipe } from './state/game-state.ts';
-import type { IGameState } from './types.ts';
+import { clearLeaderboard, loadLeaderboard, saveLeaderboard } from './storage/leaderboard.ts';
+import type { IGameState, ILeaderboardEntry } from './types.ts';
 import { createBars } from './ui/bars.ts';
 import { renderCauldron } from './ui/cauldron.ts';
-import { showGameOver } from './ui/dialogs.ts';
+import { showGameOver, showNameError } from './ui/dialogs.ts';
 import { getElement } from './ui/dom.ts';
 import { renderHud } from './ui/hud.ts';
+import { renderLeaderboard } from './ui/leaderboard.ts';
 import { createRecipePanel } from './ui/recipe.ts';
 import { createShelf } from './ui/shelf.ts';
 
@@ -28,7 +31,19 @@ const gameOver = {
   dialog: getElement('#game-over-dialog') as HTMLDialogElement,
   reason: getElement('#game-over-reason'),
   score: getElement('#final-score'),
+  nameForm: getElement('#name-form') as HTMLFormElement,
+  nameInput: getElement('#player-name') as HTMLInputElement,
+  nameError: getElement('#name-error'),
+  saved: getElement('#saved-message'),
 };
+const leaderboard = {
+  dialog: getElement('#leaderboard-dialog') as HTMLDialogElement,
+  body: getElement('#leaderboard-body'),
+  empty: getElement('#leaderboard-empty'),
+  clearButton: getElement('#clear-leaderboard-button') as HTMLButtonElement,
+};
+const confirmDialog = getElement('#confirm-dialog') as HTMLDialogElement;
+const leaderboardButton = getElement('#leaderboard-button');
 const shelf = getElement('#shelf');
 const cauldronList = getElement('#cauldron-list');
 const message = getElement('#message');
@@ -102,7 +117,7 @@ function checkGameOver(): boolean {
   state = { ...state, status: 'game-over' };
   stopClock();
   render();
-  showGameOver(gameOver, reason, state.score);
+  showGameOver(gameOver, reason, state.score, qualifies(loadLeaderboard(), state.score));
   return true;
 }
 
@@ -171,6 +186,7 @@ function render(): void {
   clockIcon.hidden = isPlaying;
 
   startButton.hidden = state !== null;
+  leaderboardButton.hidden = state !== null;
   brewButton.hidden = state === null;
   brewButton.disabled = !state || !isPlaying || !canBrew(state);
 }
@@ -199,6 +215,59 @@ brewButton.addEventListener('click', () => {
   }
   render();
   checkGameOver();
+});
+
+function openLeaderboard(highlight: ILeaderboardEntry | null = null): void {
+  renderLeaderboard(leaderboard, loadLeaderboard(), highlight);
+  if (!leaderboard.dialog.open) {
+    leaderboard.dialog.showModal();
+  }
+}
+
+gameOver.nameForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (state?.status !== 'game-over') return;
+  const name = gameOver.nameInput.value.trim();
+  if (!isValidName(name)) {
+    showNameError(gameOver, 'Use 2–15 letters, digits, spaces, _ or -.');
+    gameOver.nameInput.focus();
+    return;
+  }
+  const entry: ILeaderboardEntry = { name, score: state.score, date: Date.now() };
+  if (!saveLeaderboard(addEntry(loadLeaderboard(), entry))) {
+    showNameError(gameOver, 'Could not save the result: browser storage is unavailable.');
+    return;
+  }
+  // One result per game: hide the form so it can't be submitted twice.
+  gameOver.nameForm.hidden = true;
+  gameOver.saved.textContent = `Saved, ${name}!`;
+  gameOver.saved.hidden = false;
+  openLeaderboard(entry);
+});
+
+gameOver.nameInput.addEventListener('input', () => {
+  showNameError(gameOver, '');
+});
+
+leaderboardButton.addEventListener('click', () => {
+  openLeaderboard();
+});
+getElement('#game-over-leaderboard-button').addEventListener('click', () => {
+  openLeaderboard();
+});
+getElement('#leaderboard-back-button').addEventListener('click', () => {
+  leaderboard.dialog.close();
+});
+leaderboard.clearButton.addEventListener('click', () => {
+  confirmDialog.returnValue = '';
+  confirmDialog.showModal();
+});
+// Custom in-app confirmation instead of confirm(): Esc or Cancel keeps the list.
+confirmDialog.addEventListener('close', () => {
+  if (confirmDialog.returnValue === 'confirm') {
+    clearLeaderboard();
+    renderLeaderboard(leaderboard, loadLeaderboard());
+  }
 });
 
 pauseButton.addEventListener('click', pauseGame);
