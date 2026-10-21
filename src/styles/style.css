@@ -349,51 +349,12 @@ button {
   height: 52px;
 }
 
-.card__info {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
 .card__name {
   font-family: var(--heading);
   font-weight: 700;
   font-size: 0.9375rem;
   line-height: 1.15;
   color: var(--text);
-}
-
-.card__stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-
-.chip {
-  padding: 1px 5px;
-  border: 1px solid currentcolor;
-  border-radius: 4px;
-  background: rgb(0 0 0 / 45%);
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.chip abbr {
-  text-decoration: none;
-}
-
-.chip--temperature {
-  color: var(--temperature);
-}
-
-.chip--density {
-  color: var(--density);
-}
-
-.chip--magicPower {
-  color: var(--magic);
 }
 
 .card__badge {
@@ -408,6 +369,110 @@ button {
   font-family: var(--heading);
   font-weight: 700;
   color: var(--green);
+}
+
+/* Tooltip: base values of a shelf ingredient (Level 3) */
+
+.card {
+  --tooltip-inset: 24px;
+}
+
+.card:hover,
+.card:focus-visible {
+  /* Lifts the open tooltip above the next cards and the sticky controls. */
+  z-index: 5;
+}
+
+.tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: var(--tooltip-inset);
+  z-index: 5;
+  display: grid;
+  gap: 6px;
+  min-width: 190px;
+  padding: 10px 12px;
+  border: 1px solid var(--bronze-light);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #2a2118, #120e0a);
+  box-shadow:
+    0 6px 18px rgb(0 0 0 / 70%),
+    0 0 12px rgb(156 255 79 / 20%);
+  font-size: 0.875rem;
+  text-align: left;
+  color: var(--text);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition:
+    opacity 0.15s,
+    transform 0.15s,
+    visibility 0.15s;
+}
+
+.tooltip--left {
+  right: var(--tooltip-inset);
+  left: auto;
+}
+
+.tooltip--up {
+  top: auto;
+  bottom: calc(100% + 6px);
+  transform: translateY(4px);
+}
+
+.card:hover .tooltip,
+.card:focus-visible .tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+}
+
+/* Hovering another card hides the tooltip of the focused one: one tooltip at a time. */
+.shelf__list:hover .card:focus-visible:not(:hover) .tooltip {
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* Paused: no numbers to plan with. */
+.is-paused .tooltip {
+  display: none;
+}
+
+.tooltip__row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.tooltip__icon {
+  width: 18px;
+  height: 18px;
+}
+
+.tooltip__label {
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 0.8125rem;
+}
+
+.tooltip__value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltip__row--temperature {
+  color: var(--temperature);
+}
+
+.tooltip__row--density {
+  color: var(--density);
+}
+
+.tooltip__row--magicPower {
+  color: var(--magic);
 }
 
 /* Cauldron */
