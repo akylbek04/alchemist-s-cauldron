@@ -1,5 +1,10 @@
 import './styles/style.css';
-import { DIFFICULTY_SETTINGS, LEVEL_1_DIFFICULTY } from './data/difficulty.ts';
+import {
+  DEFAULT_DIFFICULTY,
+  DIFFICULTIES,
+  DIFFICULTY_LABELS,
+  DIFFICULTY_SETTINGS,
+} from './data/difficulty.ts';
 import { PARAMETERS } from './data/parameters.ts';
 import { brew, canBrew } from './logic/brew-check.ts';
 import { addIngredient, calculateCauldron, isCauldronFull } from './logic/cauldron.ts';
@@ -8,7 +13,14 @@ import { addEntry, isValidName, qualifies } from './logic/leaderboard.ts';
 import { getEndTime, getTimeLeft } from './logic/timer.ts';
 import { createGameState, getShelfIngredients, pickRecipe } from './state/game-state.ts';
 import { clearLeaderboard, loadLeaderboard, saveLeaderboard } from './storage/leaderboard.ts';
-import type { IGameState, ILeaderboardEntry } from './types.ts';
+import { clearSave, loadGame, saveGame } from './storage/save-game.ts';
+import type {
+  Difficulty,
+  IDifficultySettings,
+  IGameState,
+  IIngredient,
+  ILeaderboardEntry,
+} from './types.ts';
 import { createBars } from './ui/bars.ts';
 import { renderCauldron } from './ui/cauldron.ts';
 import { showGameOver, showNameError } from './ui/dialogs.ts';
@@ -16,9 +28,8 @@ import { getElement } from './ui/dom.ts';
 import { renderHud } from './ui/hud.ts';
 import { renderLeaderboard } from './ui/leaderboard.ts';
 import { createRecipePanel } from './ui/recipe.ts';
-import { createShelf } from './ui/shelf.ts';
-
-const settings = DIFFICULTY_SETTINGS[LEVEL_1_DIFFICULTY];
+import { createSettingsPanel, renderHelp } from './ui/settings.ts';
+import { createShelf, type UpdateShelf } from './ui/shelf.ts';
 
 const hud = {
   score: getElement('#score'),
@@ -41,13 +52,20 @@ const leaderboard = {
   body: getElement('#leaderboard-body'),
   empty: getElement('#leaderboard-empty'),
   clearButton: getElement('#clear-leaderboard-button') as HTMLButtonElement,
+  tabs: getElement('#leaderboard-tabs'),
 };
 const confirmDialog = getElement('#confirm-dialog') as HTMLDialogElement;
+const confirmDifficulty = getElement('#confirm-difficulty');
+const settingsButton = getElement('#settings-button');
+const settingsDialog = getElement('#settings-dialog') as HTMLDialogElement;
+const recipeNote = getElement('#recipe-note');
 const leaderboardButton = getElement('#leaderboard-button');
 const shelf = getElement('#shelf');
 const cauldronList = getElement('#cauldron-list');
 const message = getElement('#message');
 const startButton = getElement('#start-button');
+const continueButton = getElement('#continue-button');
+const pauseNote = getElement('#pause-note');
 const pauseButton = getElement('#pause-button') as HTMLButtonElement;
 const clockIcon = getElement('#clock-icon');
 const pauseDialog = getElement('#pause-dialog') as HTMLDialogElement;
@@ -56,6 +74,12 @@ const helpDialog = getElement('#help-dialog') as HTMLDialogElement;
 
 // null = start screen: empty shelf and cauldron, score and time 0, no lives.
 let state: IGameState | null = null;
+// Chosen in Settings on the start screen; a running game keeps its own state.difficulty.
+let difficulty: Difficulty = DEFAULT_DIFFICULTY;
+// An unfinished game found on page load, offered as Continue Game.
+let savedGame = loadGame();
+// The list shown in the leaderboard dialog.
+let leaderboardDifficulty: Difficulty = DEFAULT_DIFFICULTY;
 
 // While playing, the time left is always derived from this timestamp.
 let endTime = 0;
@@ -68,17 +92,32 @@ const updateRecipe = createRecipePanel(
   getElement('#ingredient-counter'),
   getElement('#recipe-ranges'),
 );
-getElement('#recipe-note').textContent = `Brew tolerance ±${String(settings.tolerance)}`;
+const updateSettings = createSettingsPanel(getElement('#settings-options'));
 
-const updateShelf = createShelf(shelf, getShelfIngredients(settings), (ingredient) => {
+function getSettings(): IDifficultySettings {
+  return DIFFICULTY_SETTINGS[state?.difficulty ?? difficulty];
+}
+
+function addToCauldron(ingredient: IIngredient): void {
   if (state?.status !== 'playing') return;
-  const next = addIngredient(state, ingredient, settings.maxCauldronIngredients);
+  const next = addIngredient(state, ingredient, getSettings().maxCauldronIngredients);
   if (next === state) return;
   state = next;
   showMessage('');
   render();
   checkGameOver();
-});
+}
+
+let updateShelf: UpdateShelf = createShelf(shelf, [], addToCauldron);
+
+// Shelf size, help numbers and the recipe note follow the chosen difficulty.
+function applyDifficulty(): void {
+  const settings = DIFFICULTY_SETTINGS[difficulty];
+  updateShelf = createShelf(shelf, getShelfIngredients(settings), addToCauldron);
+  renderHelp(helpDialog, settings);
+  recipeNote.textContent = `${DIFFICULTY_LABELS[difficulty]} · brew tolerance ±${String(settings.tolerance)}`;
+  updateSettings(difficulty);
+}
 
 function showMessage(text: string, type?: 'success' | 'failure'): void {
   message.textContent = text;
@@ -103,10 +142,19 @@ function syncTime(): void {
   }
 }
 
+// Saves the running or paused game; finished games are cleared in checkGameOver.
+function persist(): void {
+  if (state && state.status !== 'game-over') {
+    saveGame(state);
+  }
+}
+
 function tick(): void {
   syncTime();
   if (!checkGameOver()) {
     updateHud();
+    // Keeps the saved time left fresh in case the page closes without notice.
+    persist();
   }
 }
 
@@ -116,8 +164,14 @@ function checkGameOver(): boolean {
   if (!reason) return false;
   state = { ...state, status: 'game-over' };
   stopClock();
+  clearSave();
   render();
-  showGameOver(gameOver, reason, state.score, qualifies(loadLeaderboard(), state.score));
+  showGameOver(
+    gameOver,
+    reason,
+    state.score,
+    qualifies(loadLeaderboard(state.difficulty), state.score),
+  );
   return true;
 }
 
@@ -127,6 +181,7 @@ function pauseGame(): void {
   state = { ...state, status: 'paused' };
   stopClock();
   render();
+  pauseNote.hidden = true;
   pauseDialog.showModal();
 }
 
@@ -140,6 +195,8 @@ function resumeGame(): void {
 
 function exitToMenu(): void {
   stopClock();
+  clearSave();
+  savedGame = null;
   state = null;
   pauseDialog.close();
   showMessage('');
@@ -147,8 +204,22 @@ function exitToMenu(): void {
   startButton.focus();
 }
 
+// Restores the saved stock and recipe as they were, in paused state.
+function continueGame(): void {
+  if (state !== null || !savedGame) return;
+  difficulty = savedGame.difficulty;
+  applyDifficulty();
+  state = { ...savedGame, status: 'paused' };
+  savedGame = null;
+  render();
+  pauseNote.hidden = false;
+  pauseDialog.showModal();
+}
+
 function startGame(): void {
-  state = createGameState(LEVEL_1_DIFFICULTY);
+  // The new game overwrites an old unfinished save on its first render.
+  savedGame = null;
+  state = createGameState(difficulty);
   startClock();
   showMessage('');
   if (gameOver.dialog.open) {
@@ -162,13 +233,14 @@ function updateHud(): void {
   renderHud(hud, {
     score: state?.score ?? 0,
     timeLeft: state?.timeLeft ?? 0,
-    startTime: settings.startTime,
+    startTime: getSettings().startTime,
     lives: state?.lives ?? 0,
     isRunning: state?.status === 'playing',
   });
 }
 
 function render(): void {
+  const settings = getSettings();
   const ingredients = state?.cauldronIngredients ?? [];
   const isPlaying = state?.status === 'playing';
   updateShelf(
@@ -186,19 +258,26 @@ function render(): void {
   clockIcon.hidden = isPlaying;
 
   startButton.hidden = state !== null;
+  // Difficulty can only be changed on the start screen.
+  settingsButton.hidden = state !== null;
   leaderboardButton.hidden = state !== null;
   brewButton.hidden = state === null;
   brewButton.disabled = !state || !isPlaying || !canBrew(state);
+  continueButton.hidden = state !== null || savedGame === null;
+
+  persist();
 }
 
 startButton.addEventListener('click', startGame);
+continueButton.addEventListener('click', continueGame);
 getElement('#play-again-button').addEventListener('click', startGame);
 
 brewButton.addEventListener('click', () => {
   if (state?.status !== 'playing' || !canBrew(state)) return;
   syncTime();
   const before = state;
-  const result = brew(state, settings, () => pickRecipe(LEVEL_1_DIFFICULTY));
+  const { difficulty: current } = state;
+  const result = brew(state, DIFFICULTY_SETTINGS[current], () => pickRecipe(current));
   state = result.state;
   // The brew may add a time bonus: restart the countdown from the new time left.
   startClock();
@@ -217,8 +296,12 @@ brewButton.addEventListener('click', () => {
   checkGameOver();
 });
 
-function openLeaderboard(highlight: ILeaderboardEntry | null = null): void {
-  renderLeaderboard(leaderboard, loadLeaderboard(), highlight);
+function openLeaderboard(
+  shown: Difficulty = state?.difficulty ?? difficulty,
+  highlight: ILeaderboardEntry | null = null,
+): void {
+  leaderboardDifficulty = shown;
+  renderLeaderboard(leaderboard, shown, loadLeaderboard(shown), highlight);
   if (!leaderboard.dialog.open) {
     leaderboard.dialog.showModal();
   }
@@ -234,7 +317,7 @@ gameOver.nameForm.addEventListener('submit', (event) => {
     return;
   }
   const entry: ILeaderboardEntry = { name, score: state.score, date: Date.now() };
-  if (!saveLeaderboard(addEntry(loadLeaderboard(), entry))) {
+  if (!saveLeaderboard(state.difficulty, addEntry(loadLeaderboard(state.difficulty), entry))) {
     showNameError(gameOver, 'Could not save the result: browser storage is unavailable.');
     return;
   }
@@ -242,7 +325,7 @@ gameOver.nameForm.addEventListener('submit', (event) => {
   gameOver.nameForm.hidden = true;
   gameOver.saved.textContent = `Saved, ${name}!`;
   gameOver.saved.hidden = false;
-  openLeaderboard(entry);
+  openLeaderboard(state.difficulty, entry);
 });
 
 gameOver.nameInput.addEventListener('input', () => {
@@ -258,15 +341,23 @@ getElement('#game-over-leaderboard-button').addEventListener('click', () => {
 getElement('#leaderboard-back-button').addEventListener('click', () => {
   leaderboard.dialog.close();
 });
+leaderboard.tabs.addEventListener('click', (event) => {
+  const tab = (event.target as HTMLElement).closest('button');
+  const shown = DIFFICULTIES.find((item) => item === tab?.value);
+  if (shown) {
+    openLeaderboard(shown);
+  }
+});
 leaderboard.clearButton.addEventListener('click', () => {
+  confirmDifficulty.textContent = DIFFICULTY_LABELS[leaderboardDifficulty];
   confirmDialog.returnValue = '';
   confirmDialog.showModal();
 });
 // Custom in-app confirmation instead of confirm(): Esc or Cancel keeps the list.
 confirmDialog.addEventListener('close', () => {
   if (confirmDialog.returnValue === 'confirm') {
-    clearLeaderboard();
-    renderLeaderboard(leaderboard, loadLeaderboard());
+    clearLeaderboard(leaderboardDifficulty);
+    openLeaderboard(leaderboardDifficulty);
   }
 });
 
@@ -281,7 +372,24 @@ document.addEventListener('visibilitychange', () => {
 });
 
 getElement('#help-button').addEventListener('click', () => {
+  // The rules show the numbers of the current game, or of the chosen difficulty.
+  renderHelp(helpDialog, getSettings());
   helpDialog.showModal();
 });
 
+settingsButton.addEventListener('click', () => {
+  if (state !== null) return;
+  settingsDialog.returnValue = '';
+  settingsDialog.showModal();
+});
+// Each difficulty button submits its value; Back and Esc leave it empty.
+settingsDialog.addEventListener('close', () => {
+  const chosen = DIFFICULTIES.find((item) => item === settingsDialog.returnValue);
+  if (!chosen || state !== null) return;
+  difficulty = chosen;
+  applyDifficulty();
+  render();
+});
+
+applyDifficulty();
 render();

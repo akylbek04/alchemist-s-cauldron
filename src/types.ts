@@ -49,9 +49,11 @@ export interface IDifficultySettings {
   lives: number;
   scorePerBrew: number;
   timeBonus: number; // seconds
+  reactions: number; // used from Level 3 on
 }
 
 export interface IGameState {
+  difficulty: Difficulty;
   status: GameStatus;
   score: number;
   timeLeft: number; // seconds

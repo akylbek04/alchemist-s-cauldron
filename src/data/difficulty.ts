@@ -10,6 +10,7 @@ export const DIFFICULTY_SETTINGS: Record<Difficulty, IDifficultySettings> = {
     lives: 5,
     scorePerBrew: 100,
     timeBonus: 15,
+    reactions: 0,
   },
   medium: {
     shelfSize: 6,
@@ -19,6 +20,7 @@ export const DIFFICULTY_SETTINGS: Record<Difficulty, IDifficultySettings> = {
     lives: 3,
     scorePerBrew: 200,
     timeBonus: 10,
+    reactions: 2,
   },
   hard: {
     shelfSize: 8,
@@ -28,8 +30,17 @@ export const DIFFICULTY_SETTINGS: Record<Difficulty, IDifficultySettings> = {
     lives: 3,
     scorePerBrew: 300,
     timeBonus: 5,
+    reactions: 3,
   },
 };
 
-// Level 1 always plays with the Medium rules.
-export const LEVEL_1_DIFFICULTY: Difficulty = 'medium';
+export const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
+
+export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
+  easy: 'Easy',
+  medium: 'Medium',
+  hard: 'Hard',
+};
+
+// Medium is the full Level 1 rule set and the default choice.
+export const DEFAULT_DIFFICULTY: Difficulty = 'medium';

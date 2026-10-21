@@ -14,6 +14,7 @@ import {
   qualifies,
   sortEntries,
 } from './leaderboard.ts';
+import { parseSave } from './save.ts';
 import { formatTime, getEndTime, getTimeLeft } from './timer.ts';
 import type { IGameState, IIngredient, ILeaderboardEntry, IRecipe } from '../types.ts';
 
@@ -56,6 +57,7 @@ check(high.a === MAX_STOCK, `max stock should be ${String(MAX_STOCK)}, got ${Str
 
 // Add: keeps order, spends stock, allows repeats while stock > 0.
 let state: IGameState = {
+  difficulty: 'medium',
   status: 'playing',
   score: 0,
   timeLeft: 150,
@@ -75,6 +77,7 @@ check(addIngredient(state, tears, 4) === state, 'empty ingredient must be ignore
 
 // Full cauldron: ignored, stock untouched.
 const full: IGameState = {
+  difficulty: 'medium',
   status: 'playing',
   score: 0,
   timeLeft: 150,
@@ -119,6 +122,24 @@ check(
 
 // Brew check, README worked example: Moon Mist ±8 -> 24..50 / 4..30 / 9..35.
 const medium = DIFFICULTY_SETTINGS.medium;
+
+// Difficulty table from the README, row by row; Medium is the Level 1 rule set.
+const table = (['easy', 'medium', 'hard'] as const).map((d) => {
+  const x = DIFFICULTY_SETTINGS[d];
+  return [
+    x.shelfSize,
+    x.maxCauldronIngredients,
+    x.startTime,
+    x.tolerance,
+    x.lives,
+    x.scorePerBrew,
+    x.timeBonus,
+    x.reactions,
+  ].join();
+});
+check(table[0] === '4,4,180,12,5,100,15,0', `easy row, got ${String(table[0])}`);
+check(table[1] === '6,4,150,8,3,200,10,2', `medium row, got ${String(table[1])}`);
+check(table[2] === '8,5,150,5,3,300,5,3', `hard row, got ${String(table[2])}`);
 check(isBrewSuccessful(mix, recipe, medium.tolerance), '37/17/22 must pass Moon Mist ±8');
 check(
   isBrewSuccessful({ temperature: 50, density: 4, magicPower: 35 }, recipe, 8),
@@ -131,6 +152,7 @@ check(
 
 const next: IRecipe = { ...recipe, id: 'next' };
 const brewing: IGameState = {
+  difficulty: 'medium',
   status: 'playing',
   score: 0,
   timeLeft: 145,
@@ -229,3 +251,61 @@ const mixed = parseEntries([
   entry('Also', 400, 2),
 ]);
 check(mixed.map((e) => e.name).join() === 'Also,Good', 'only valid entries, sorted');
+
+// Save: valid unfinished games round-trip through JSON, the rest is rejected.
+const catalogue: IIngredient[] = Array.from({ length: 8 }, (_, i) => ({
+  ...tears,
+  id: `i${String(i)}`,
+}));
+const easyRecipe = RECIPES.find((r) => r.difficulty === 'easy');
+check(easyRecipe !== undefined, 'an easy recipe exists');
+const saved: IGameState = {
+  difficulty: 'easy',
+  status: 'playing',
+  score: 300,
+  timeLeft: 97.25,
+  lives: 4,
+  activeRecipe: easyRecipe ?? recipe,
+  cauldronIngredients: [catalogue[1] ?? tears, catalogue[1] ?? tears],
+  shelfStock: { i0: 0, i1: 3, i2: 15, i3: 7 },
+};
+const restored = parseSave(JSON.parse(JSON.stringify(saved)), catalogue);
+check(JSON.stringify(restored) === JSON.stringify(saved), 'a valid save is restored as it was');
+check(restored?.cauldronIngredients[0] === catalogue[1], 'ingredients come from the catalogue');
+check(restored?.activeRecipe === easyRecipe, 'the recipe comes from the recipe table');
+check(parseSave({ ...saved, status: 'paused' }, catalogue)?.status === 'paused', 'paused is kept');
+
+const broken: [string, unknown][] = [
+  ['null', null],
+  ['text', 'save'],
+  ['finished game', { ...saved, status: 'game-over' }],
+  ['no lives', { ...saved, lives: 0 }],
+  ['no time', { ...saved, timeLeft: 0 }],
+  [
+    'out of ingredients',
+    { ...saved, cauldronIngredients: [], shelfStock: { i0: 0, i1: 0, i2: 0, i3: 0 } },
+  ],
+  ['unknown difficulty', { ...saved, difficulty: 'insane' }],
+  ['more lives than allowed', { ...saved, lives: 6 }],
+  ['time above the start time', { ...saved, timeLeft: 181 }],
+  ['NaN time', { ...saved, timeLeft: Number.NaN }],
+  ['fractional score', { ...saved, score: 1.5 }],
+  ['score as text', { ...saved, score: '300' }],
+  [
+    'recipe of another difficulty',
+    { ...saved, activeRecipe: RECIPES.find((r) => r.difficulty === 'hard') },
+  ],
+  ['unknown recipe', { ...saved, activeRecipe: { id: 'nope' } }],
+  ['stock above 15', { ...saved, shelfStock: { ...saved.shelfStock, i0: 16 } }],
+  ['missing stock', { ...saved, shelfStock: { i0: 1, i1: 1, i2: 1 } }],
+  [
+    'stock of an ingredient not on this shelf',
+    { ...saved, shelfStock: { ...saved.shelfStock, i5: 1 } },
+  ],
+  ['cauldron over the limit', { ...saved, cauldronIngredients: Array(5).fill(catalogue[0]) }],
+  ['ingredient not on this shelf', { ...saved, cauldronIngredients: [catalogue[6]] }],
+  ['cauldron not an array', { ...saved, cauldronIngredients: {} }],
+];
+for (const [name, data] of broken) {
+  check(parseSave(data, catalogue) === null, `broken save must be rejected: ${name}`);
+}

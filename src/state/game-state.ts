@@ -22,6 +22,7 @@ export function pickRecipe(difficulty: Difficulty): IRecipe {
 export function createGameState(difficulty: Difficulty): IGameState {
   const settings = DIFFICULTY_SETTINGS[difficulty];
   return {
+    difficulty,
     status: 'playing',
     score: 0,
     timeLeft: settings.startTime,
