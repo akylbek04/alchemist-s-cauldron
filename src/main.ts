@@ -22,7 +22,7 @@ import type {
   ILeaderboardEntry,
 } from './types.ts';
 import { createBars } from './ui/bars.ts';
-import { renderCauldron } from './ui/cauldron.ts';
+import { createDropZone, renderCauldron } from './ui/cauldron.ts';
 import { showGameOver, showNameError } from './ui/dialogs.ts';
 import { getElement } from './ui/dom.ts';
 import { renderHud } from './ui/hud.ts';
@@ -109,6 +109,18 @@ function addToCauldron(ingredient: IIngredient): void {
 }
 
 let updateShelf: UpdateShelf = createShelf(shelf, [], addToCauldron);
+
+// A drop adds the same ingredient through the same checks as a click.
+createDropZone(
+  getElement('#cauldron'),
+  () => state?.status === 'playing' && !isCauldronFull(state, getSettings().maxCauldronIngredients),
+  (id) => {
+    const ingredient = getShelfIngredients(getSettings()).find((item) => item.id === id);
+    if (ingredient) {
+      addToCauldron(ingredient);
+    }
+  },
+);
 
 // Shelf size, help numbers and the recipe note follow the chosen difficulty.
 function applyDifficulty(): void {

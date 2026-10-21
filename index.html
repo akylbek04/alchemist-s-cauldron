@@ -45,7 +45,7 @@
           <div class="shelf__list" id="shelf"></div>
         </section>
 
-        <section class="cauldron" aria-label="Cauldron">
+        <section class="cauldron" id="cauldron" aria-label="Cauldron">
           <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
           <ol class="cauldron__list" id="cauldron-list" aria-label="In the cauldron"></ol>
           <p class="message" id="message" role="status"></p>
@@ -96,7 +96,8 @@
           in the recipe book.
         </li>
         <li>
-          Click ingredients on the shelf to add them to the cauldron. You may add up to
+          Click ingredients on the shelf, or drag them into the cauldron, to add them. You may add
+          up to
           <strong data-setting="maxCauldronIngredients">4</strong>. Each ingredient has a limited
           stock.
         </li>
