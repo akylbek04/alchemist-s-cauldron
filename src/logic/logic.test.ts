@@ -56,6 +56,7 @@ check(high.a === MAX_STOCK, `max stock should be ${String(MAX_STOCK)}, got ${Str
 
 // Add: keeps order, spends stock, allows repeats while stock > 0.
 let state: IGameState = {
+  difficulty: 'medium',
   status: 'playing',
   score: 0,
   timeLeft: 150,
@@ -75,6 +76,7 @@ check(addIngredient(state, tears, 4) === state, 'empty ingredient must be ignore
 
 // Full cauldron: ignored, stock untouched.
 const full: IGameState = {
+  difficulty: 'medium',
   status: 'playing',
   score: 0,
   timeLeft: 150,
@@ -119,6 +121,24 @@ check(
 
 // Brew check, README worked example: Moon Mist ±8 -> 24..50 / 4..30 / 9..35.
 const medium = DIFFICULTY_SETTINGS.medium;
+
+// Difficulty table from the README, row by row; Medium is the Level 1 rule set.
+const table = (['easy', 'medium', 'hard'] as const).map((d) => {
+  const x = DIFFICULTY_SETTINGS[d];
+  return [
+    x.shelfSize,
+    x.maxCauldronIngredients,
+    x.startTime,
+    x.tolerance,
+    x.lives,
+    x.scorePerBrew,
+    x.timeBonus,
+    x.reactions,
+  ].join();
+});
+check(table[0] === '4,4,180,12,5,100,15,0', `easy row, got ${String(table[0])}`);
+check(table[1] === '6,4,150,8,3,200,10,2', `medium row, got ${String(table[1])}`);
+check(table[2] === '8,5,150,5,3,300,5,3', `hard row, got ${String(table[2])}`);
 check(isBrewSuccessful(mix, recipe, medium.tolerance), '37/17/22 must pass Moon Mist ±8');
 check(
   isBrewSuccessful({ temperature: 50, density: 4, magicPower: 35 }, recipe, 8),
@@ -131,6 +151,7 @@ check(
 
 const next: IRecipe = { ...recipe, id: 'next' };
 const brewing: IGameState = {
+  difficulty: 'medium',
   status: 'playing',
   score: 0,
   timeLeft: 145,

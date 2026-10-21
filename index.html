@@ -69,39 +69,63 @@
         </button>
         <button class="main-button" id="start-button" type="button">Start Game</button>
         <button class="main-button" id="brew-button" type="button" hidden>Brew</button>
-        <button class="round-button" id="leaderboard-button" type="button">
-          <img class="round-button__icon" src="/src/assets/icons/trophy.svg" alt="" />
-          <span>Leaders</span>
-        </button>
+        <div class="controls__side">
+          <button class="round-button" id="settings-button" type="button">
+            <img class="round-button__icon" src="/src/assets/icons/settings.svg" alt="" />
+            <span>Settings</span>
+          </button>
+          <button class="round-button" id="leaderboard-button" type="button">
+            <img class="round-button__icon" src="/src/assets/icons/trophy.svg" alt="" />
+            <span>Leaders</span>
+          </button>
+        </div>
       </footer>
     </div>
 
     <dialog class="dialog" id="help-dialog" aria-labelledby="help-title">
       <h2 class="dialog__title" id="help-title">How to Brew</h2>
       <ol class="dialog__list">
-        <li>Press <strong>Start Game</strong>. A random recipe appears in the recipe book.</li>
+        <li>
+          Choose <strong>Easy</strong>, <strong>Medium</strong> or <strong>Hard</strong> in
+          <strong>Settings</strong>, then press <strong>Start Game</strong>. A random recipe appears
+          in the recipe book.
+        </li>
         <li>
           Click ingredients on the shelf to add them to the cauldron. You may add up to
-          <strong>4</strong>. Each ingredient has a limited stock.
+          <strong data-setting="maxCauldronIngredients">4</strong>. Each ingredient has a limited
+          stock.
         </li>
         <li>
           Watch the <strong>Temperature</strong>, <strong>Density</strong> and
           <strong>Magic Power</strong> bars. Try to move every marker into its green zone.
         </li>
         <li>
-          Press <strong>Brew</strong>. Each value may miss its range by up to <strong>±8</strong>.
+          Press <strong>Brew</strong>. Each value may miss its range by up to
+          <strong>±<span data-setting="tolerance">8</span></strong
+          >.
         </li>
         <li>
-          Success: <strong>+200</strong> points, <strong>+10 s</strong> and a new recipe. Failure:
+          Success: <strong>+<span data-setting="scorePerBrew">200</span></strong> points,
+          <strong>+<span data-setting="timeBonus">10</span> s</strong> and a new recipe. Failure:
           you lose <strong>1 life</strong>. Used ingredients are spent either way.
         </li>
         <li>
-          The game ends when the time runs out, you lose all <strong>3</strong> lives, or the shelf
-          and the cauldron are both empty.
+          The game ends when the time runs out, you lose all
+          <strong data-setting="lives">3</strong> lives, or the shelf and the cauldron are both
+          empty.
         </li>
       </ol>
       <form method="dialog">
         <button class="main-button main-button--small" type="submit">Close</button>
+      </form>
+    </dialog>
+
+    <dialog class="dialog dialog--settings" id="settings-dialog" aria-labelledby="settings-title">
+      <h2 class="dialog__title" id="settings-title">Difficulty</h2>
+      <p class="dialog__text">The choice applies to the next game.</p>
+      <form class="settings__options" id="settings-options" method="dialog"></form>
+      <form method="dialog">
+        <button class="main-button main-button--small main-button--secondary" value="">Back</button>
       </form>
     </dialog>
 
@@ -153,6 +177,11 @@
       aria-labelledby="leaderboard-title"
     >
       <h2 class="leaderboard__title" id="leaderboard-title">Top Alchemists Leaderboard</h2>
+      <div class="leaderboard__tabs" id="leaderboard-tabs" role="group" aria-label="Difficulty">
+        <button class="leaderboard__tab" type="button" value="easy">Easy</button>
+        <button class="leaderboard__tab" type="button" value="medium">Medium</button>
+        <button class="leaderboard__tab" type="button" value="hard">Hard</button>
+      </div>
       <div class="leaderboard__table-wrap">
         <table class="leaderboard__table">
           <thead>
@@ -160,6 +189,7 @@
               <th scope="col">Rank</th>
               <th scope="col">Name</th>
               <th scope="col">Score</th>
+              <th scope="col">Difficulty</th>
               <th scope="col">Date</th>
             </tr>
           </thead>
@@ -185,8 +215,12 @@
     </dialog>
 
     <dialog class="dialog dialog--confirm" id="confirm-dialog" aria-labelledby="confirm-title">
-      <h2 class="dialog__title" id="confirm-title">Clear the leaderboard?</h2>
-      <p class="dialog__text">All saved results will be removed. This cannot be undone.</p>
+      <h2 class="dialog__title" id="confirm-title">
+        Clear the <span id="confirm-difficulty">Medium</span> leaderboard?
+      </h2>
+      <p class="dialog__text">
+        All saved results for this difficulty will be removed. This cannot be undone.
+      </p>
       <form class="dialog__buttons" method="dialog">
         <button class="main-button main-button--small" value="cancel" autofocus>Cancel</button>
         <button class="danger-button" value="confirm">Clear</button>

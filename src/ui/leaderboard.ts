@@ -1,11 +1,13 @@
+import { DIFFICULTY_LABELS } from '../data/difficulty.ts';
 import { formatDate } from '../logic/leaderboard.ts';
-import type { ILeaderboardEntry } from '../types.ts';
+import type { Difficulty, ILeaderboardEntry } from '../types.ts';
 import { createElement } from './dom.ts';
 
 export interface ILeaderboardElements {
   body: HTMLElement;
   empty: HTMLElement;
   clearButton: HTMLButtonElement;
+  tabs: HTMLElement;
 }
 
 function isSameEntry(a: ILeaderboardEntry, b: ILeaderboardEntry | null): boolean {
@@ -14,6 +16,7 @@ function isSameEntry(a: ILeaderboardEntry, b: ILeaderboardEntry | null): boolean
 
 export function renderLeaderboard(
   elements: ILeaderboardElements,
+  difficulty: Difficulty,
   entries: readonly ILeaderboardEntry[],
   highlight: ILeaderboardEntry | null = null,
 ): void {
@@ -28,6 +31,7 @@ export function renderLeaderboard(
         rank,
         createElement('td', 'leaderboard__name', entry.name),
         createElement('td', 'leaderboard__score', String(entry.score)),
+        createElement('td', 'leaderboard__difficulty', DIFFICULTY_LABELS[difficulty]),
         createElement('td', 'leaderboard__date', formatDate(entry.date)),
       );
       return row;
@@ -35,4 +39,7 @@ export function renderLeaderboard(
   );
   elements.empty.hidden = entries.length > 0;
   elements.clearButton.disabled = entries.length === 0;
+  for (const tab of elements.tabs.querySelectorAll('button')) {
+    tab.setAttribute('aria-pressed', String(tab.value === difficulty));
+  }
 }
