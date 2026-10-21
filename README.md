@@ -4,6 +4,8 @@ A browser puzzle game: mix ingredients in a cauldron, move **Temperature**, **De
 
 Built with **TypeScript** and **Vite**, without frameworks or game libraries.
 
+**Play:** https://akylbek04.github.io/alchemist-s-cauldron/
+
 ## Game goal
 
 1. A random recipe is picked. It shows 3 target ranges and how many ingredients you may use.
@@ -25,6 +27,32 @@ The work is split into stories. Each story is developed in its own branch (`stor
 ## Implemented
 
 - [x] Precondition 1 — project setup
+- [x] US 1.1 — ingredient shelf & cauldron
+- [x] US 1.2 — cauldron parameter bars
+- [x] US 1.3 — recipe & brewing check
+- [x] US 1.4 — timer & game over
+- [x] US 1.5 — pause
+- [x] US 1.6 — leaderboard (Top-10)
+
+Level 1 is complete.
+
+## How to play
+
+- The start screen shows an empty shelf and cauldron, score and time `0` and no lives. Press **Start Game** (or **Help** for the rules).
+- The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
+- The shelf shows 6 ingredients. Each card shows its **T**emperature, **D**ensity and **M**agic **P**ower and a badge with the portions left (random 2–15 per game).
+- Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
+- The cauldron holds up to 4 ingredients. When it is full (**4 / 4**, highlighted), the shelf is blocked.
+- The 3 bars show the cauldron's values (the sum of the added ingredients, starting at 0 / 0 / 0). The green zone is the recipe's target range, the diamond is the current value, and a bar glows when its value is inside the range. Temperature and Density can go negative: `0` is the center.
+- Press **Brew**. Each value may miss its range by up to **±8**.
+  - Success: **+200** points, **+10 s** (never above 150 s) and a new random recipe.
+  - Failure: **−1 life**.
+  - Either way the cauldron is cleared and the used ingredients are spent.
+- The game starts with **150 s** and **3 lives** (hearts in the top bar). The timer shows `MM:SS` and a shrinking bar, and turns red and pulses under **15 s**. It is calculated from timestamps, so it stays correct in a background tab.
+- Press the **Pause** button next to the timer to stop the game: the timer stops, the field is blurred and the shelf and Brew are blocked. **Resume** continues the same game, **Exit to Menu** goes back to the start screen. The game also pauses by itself when the browser tab is hidden.
+- The game ends when the time reaches `00:00`, all lives are lost, or the shelf and the cauldron are both empty (**Out of ingredients**). The Game Over screen shows the reason, the final score and **Play again**.
+- If the final score (above 0) makes the Top-10, the Game Over screen asks for a name: 2–15 characters, letters, digits, space, `_` and `-`. The result is saved in `localStorage`.
+- The **Leaderboard** (from the start screen or the Game Over screen) shows rank, name, score and date (`DD.MM.YYYY HH:MM`), sorted by score; on equal scores the earlier result stays higher. **Clear Leaderboard** asks for confirmation in an in-app dialog. Broken or blocked storage never crashes the game: the board is just empty.
 
 ## Project structure
 
@@ -58,9 +86,14 @@ npm run lint          # ESLint (strict TypeScript rules, no console, no any)
 npm run lint:fix      # ESLint with auto-fix
 npm run format        # format all files with Prettier
 npm run format:check  # check formatting
+npm test              # game logic tests (Node built-in test runner)
 ```
 
 Git hooks (Husky):
 
 - `commit-msg` — the message must follow the RS School convention: `<type>: <description>`, e.g. `feat: add ingredient shelf`. Types: `init`, `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`, `perf`, `build`, `ci`, `revert`.
-- `pre-push` — runs `lint` and `format:check`; the push is blocked if either fails.
+- `pre-push` — runs `lint`, `format:check` and `test`; the push is blocked if any of them fails.
+
+## Deploy
+
+Every push to a `story-*` branch builds the game and deploys it to GitHub Pages (`.github/workflows/deploy.yml`). The final story PRs stay unmerged, so `main` is never deployed.

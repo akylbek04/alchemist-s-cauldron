@@ -4,9 +4,212 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alchemist's Cauldron</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
-    <div id="app"></div>
+    <div class="app">
+      <header class="hud">
+        <div class="hud__group hud__group--score">
+          <img class="hud__icon" src="/src/assets/icons/score.svg" alt="" />
+          <span class="hud__label">Score:</span>
+          <span class="hud__value" id="score">0</span>
+        </div>
+        <div class="hud__group hud__group--time" id="time-group">
+          <button class="pause-button" id="pause-button" type="button" aria-label="Pause" hidden>
+            <img src="/src/assets/icons/pause.svg" alt="" />
+          </button>
+          <img class="hud__icon" id="clock-icon" src="/src/assets/icons/clock.svg" alt="" />
+          <div class="hud__time">
+            <span class="hud__time-text">
+              <span class="hud__label">Time:</span>
+              <span class="hud__value" id="time">00:00</span>
+            </span>
+            <span class="time-bar" aria-hidden="true">
+              <span class="time-bar__fill" id="time-bar"></span>
+            </span>
+          </div>
+        </div>
+        <div class="hud__group hud__group--lives" id="lives" role="img"></div>
+      </header>
+
+      <h1 class="title">Alchemist's Cauldron</h1>
+
+      <main class="game">
+        <section class="panel shelf" aria-labelledby="shelf-title">
+          <h2 class="panel__title" id="shelf-title">Ingredients</h2>
+          <div class="shelf__list" id="shelf"></div>
+        </section>
+
+        <section class="cauldron" aria-label="Cauldron">
+          <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
+          <ol class="cauldron__list" id="cauldron-list" aria-label="In the cauldron"></ol>
+          <p class="message" id="message" role="status"></p>
+        </section>
+
+        <section class="recipe" aria-labelledby="recipe-name">
+          <p class="recipe__eyebrow">Current Recipe</p>
+          <h2 class="recipe__name" id="recipe-name"></h2>
+          <p class="counter" id="ingredient-counter"></p>
+          <dl class="recipe__ranges" id="recipe-ranges"></dl>
+          <p class="recipe__note" id="recipe-note"></p>
+        </section>
+
+        <section class="bars" id="bars" aria-label="Cauldron values"></section>
+      </main>
+
+      <footer class="controls">
+        <button class="round-button" id="help-button" type="button">
+          <img class="round-button__icon" src="/src/assets/icons/help.svg" alt="" />
+          <span>Help</span>
+        </button>
+        <button class="main-button" id="start-button" type="button">Start Game</button>
+        <button class="main-button" id="brew-button" type="button" hidden>Brew</button>
+        <button class="round-button" id="leaderboard-button" type="button">
+          <img class="round-button__icon" src="/src/assets/icons/trophy.svg" alt="" />
+          <span>Leaders</span>
+        </button>
+      </footer>
+    </div>
+
+    <dialog class="dialog" id="help-dialog" aria-labelledby="help-title">
+      <h2 class="dialog__title" id="help-title">How to Brew</h2>
+      <ol class="dialog__list">
+        <li>Press <strong>Start Game</strong>. A random recipe appears in the recipe book.</li>
+        <li>
+          Click ingredients on the shelf to add them to the cauldron. You may add up to
+          <strong>4</strong>. Each ingredient has a limited stock.
+        </li>
+        <li>
+          Watch the <strong>Temperature</strong>, <strong>Density</strong> and
+          <strong>Magic Power</strong> bars. Try to move every marker into its green zone.
+        </li>
+        <li>
+          Press <strong>Brew</strong>. Each value may miss its range by up to <strong>±8</strong>.
+        </li>
+        <li>
+          Success: <strong>+200</strong> points, <strong>+10 s</strong> and a new recipe. Failure:
+          you lose <strong>1 life</strong>. Used ingredients are spent either way.
+        </li>
+        <li>
+          The game ends when the time runs out, you lose all <strong>3</strong> lives, or the shelf
+          and the cauldron are both empty.
+        </li>
+      </ol>
+      <form method="dialog">
+        <button class="main-button main-button--small" type="submit">Close</button>
+      </form>
+    </dialog>
+
+    <dialog
+      class="dialog dialog--game-over"
+      id="game-over-dialog"
+      aria-labelledby="game-over-title"
+      closedby="none"
+    >
+      <h2 class="dialog__title dialog__title--large" id="game-over-title">Game Over</h2>
+      <p class="game-over__reason" id="game-over-reason"></p>
+      <p class="game-over__label">Final Score:</p>
+      <p class="game-over__score" id="final-score">0</p>
+      <form class="name-form" id="name-form" novalidate hidden>
+        <label class="name-form__label" for="player-name">Enter your name (2–15 chars):</label>
+        <input
+          class="name-form__input"
+          id="player-name"
+          name="name"
+          type="text"
+          maxlength="15"
+          autocomplete="nickname"
+          spellcheck="false"
+          placeholder="AlchemistName"
+          aria-describedby="name-hint name-error"
+        />
+        <p class="name-form__hint" id="name-hint">Letters, digits, space, _ and -</p>
+        <p class="name-form__error" id="name-error" role="alert"></p>
+        <button class="main-button main-button--small" type="submit">Submit Score</button>
+      </form>
+      <p class="game-over__saved" id="saved-message" role="status" hidden></p>
+      <div class="dialog__buttons">
+        <button class="main-button main-button--small" id="play-again-button" type="button">
+          Play again
+        </button>
+        <button
+          class="main-button main-button--small main-button--secondary"
+          id="game-over-leaderboard-button"
+          type="button"
+        >
+          Leaderboard
+        </button>
+      </div>
+    </dialog>
+
+    <dialog
+      class="dialog dialog--leaderboard"
+      id="leaderboard-dialog"
+      aria-labelledby="leaderboard-title"
+    >
+      <h2 class="leaderboard__title" id="leaderboard-title">Top Alchemists Leaderboard</h2>
+      <div class="leaderboard__table-wrap">
+        <table class="leaderboard__table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Name</th>
+              <th scope="col">Score</th>
+              <th scope="col">Date</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+      <p class="leaderboard__empty" id="leaderboard-empty">
+        No results yet. Brew some potions to get on the board!
+      </p>
+      <div class="dialog__buttons">
+        <button class="danger-button" id="clear-leaderboard-button" type="button">
+          Clear Leaderboard
+        </button>
+        <button
+          class="main-button main-button--small"
+          id="leaderboard-back-button"
+          type="button"
+          autofocus
+        >
+          Back
+        </button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog dialog--confirm" id="confirm-dialog" aria-labelledby="confirm-title">
+      <h2 class="dialog__title" id="confirm-title">Clear the leaderboard?</h2>
+      <p class="dialog__text">All saved results will be removed. This cannot be undone.</p>
+      <form class="dialog__buttons" method="dialog">
+        <button class="main-button main-button--small" value="cancel" autofocus>Cancel</button>
+        <button class="danger-button" value="confirm">Clear</button>
+      </form>
+    </dialog>
+
+    <dialog
+      class="dialog dialog--pause"
+      id="pause-dialog"
+      aria-labelledby="pause-title"
+      closedby="none"
+    >
+      <h2 class="dialog__title dialog__title--large" id="pause-title">Game Paused</h2>
+      <div class="dialog__actions">
+        <button class="main-button main-button--menu" id="resume-button" type="button">
+          Resume
+        </button>
+        <button class="main-button main-button--menu" id="exit-button" type="button">
+          Exit to Menu
+        </button>
+      </div>
+    </dialog>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
