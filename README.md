@@ -35,6 +35,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 1.6 — leaderboard (Top-10)
 - [x] US 2.1 — difficulty selection
 - [x] US 2.2 — auto-save & continue game
+- [x] US 3.1 — drag & drop
 
 Level 1 is complete.
 
@@ -58,7 +59,7 @@ Level 1 is complete.
 
 - The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
 - The shelf shows 6 ingredients. Each card shows its **T**emperature, **D**ensity and **M**agic **P**ower and a badge with the portions left (random 2–15 per game).
-- Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
+- Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron, or drag the card into the cauldron with the mouse (the cauldron glows while a valid card is over it). A drop follows the same rules as a click: nothing happens when the cauldron is full or the game is paused, and empty slots can't be dragged. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
 - The cauldron holds up to 4 ingredients. When it is full (**4 / 4**, highlighted), the shelf is blocked.
 - The 3 bars show the cauldron's values (the sum of the added ingredients, starting at 0 / 0 / 0). The green zone is the recipe's target range, the diamond is the current value, and a bar glows when its value is inside the range. Temperature and Density can go negative: `0` is the center.
 - Press **Brew**. Each value may miss its range by up to **±8**.
