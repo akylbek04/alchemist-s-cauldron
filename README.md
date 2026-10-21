@@ -37,6 +37,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 2.2 — auto-save & continue game
 - [x] US 3.1 — drag & drop
 - [x] US 3.2 — ingredient tooltip
+- [x] US 3.3 — chemical reactions
 
 Level 1 is complete.
 
@@ -54,13 +55,25 @@ Level 1 is complete.
   | Lives          |   5   |   3    |   3   |
   | Score per brew |  100  |  200   |  300  |
   | Time bonus     | +15 s | +10 s  | +5 s  |
-  | Reactions (L3) |   0   |   2    |   3   |
+  | Reactions      |   0   |   2    |   3   |
 
   Recipes come only from the chosen difficulty. The difficulty can't be changed during a game. The rest of this list describes **Medium**.
 
 - The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
 - The shelf shows 6 ingredients. Each card shows only its icon, name and a badge with the portions left (random 2–15 per game). Hover a card (or focus it with the keyboard) to see its **Temperature**, **Density** and **Magic Power** in a tooltip, with `+` / `−` signs. Near the right or bottom screen edge the tooltip opens to the left or upward; it is hidden while the game is paused.
 - Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron, or drag the card into the cauldron with the mouse (the cauldron glows while a valid card is over it). A drop follows the same rules as a click: nothing happens when the cauldron is full or the game is paused, and empty slots can't be dragged. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
+- **Reactions** (Medium and Hard): some mixes react while they stay in the cauldron. The values are always rebuilt from the ingredient list: plain sums first, then every active reaction in table order. The bars and the brew check both use these values. A reaction fires (message, and its one-time time or life cost) only when it changes from not active to active; adding more ingredients to the same mix does not fire it again. **Help** lists the reactions of the current difficulty.
+
+  | Difficulty | Reaction       | Trigger                                                    | Effect                              |
+  | ---------- | -------------- | ---------------------------------------------------------- | ----------------------------------- |
+  | Medium     | Bubbling       | Fairy Dust + Caustic Acid                                  | Magic Power +50%, −10 s once        |
+  | Medium     | Solar Frost    | Dragon Tears + Frost Lotus                                 | Temperature set to 0, Density +20%  |
+  | Hard       | Volatile Mix   | Phoenix Feather + Essence of the Void                      | −1 life and the cauldron is cleared |
+  | Hard       | Pressure Spike | Total Density ≥ 70                                         | Density set to 70, Magic Power +10% |
+  | Hard       | Burning Root   | Mandrake Root + Phoenix Feather and total Temperature ≥ 40 | Temperature +15, Density −10%       |
+
+  Percent changes are rounded to whole numbers. Medium uses only ingredients from its 6-card shelf.
+
 - The cauldron holds up to 4 ingredients. When it is full (**4 / 4**, highlighted), the shelf is blocked.
 - The 3 bars show the cauldron's values (the sum of the added ingredients, starting at 0 / 0 / 0). The green zone is the recipe's target range, the diamond is the current value, and a bar glows when its value is inside the range. Temperature and Density can go negative: `0` is the center.
 - Press **Brew**. Each value may miss its range by up to **±8**.
