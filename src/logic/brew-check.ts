@@ -3,10 +3,12 @@ import type {
   IDifficultySettings,
   IGameState,
   IRecipe,
+  IReaction,
   IRecipeRange,
   ParameterKey,
 } from '../types.ts';
-import { calculateCauldron, isInRange } from './cauldron.ts';
+import { isInRange } from './cauldron.ts';
+import { getCauldronValues } from './reactions.ts';
 
 const PARAMETER_KEYS: readonly ParameterKey[] = ['temperature', 'density', 'magicPower'];
 
@@ -38,9 +40,11 @@ export function brew(
   state: IGameState,
   settings: IDifficultySettings,
   nextRecipe: () => IRecipe,
+  reactions: readonly IReaction[],
 ): IBrewResult {
+  // The same values the bars show: sums with the active reactions applied.
   const success = isBrewSuccessful(
-    calculateCauldron(state.cauldronIngredients),
+    getCauldronValues(state.cauldronIngredients, reactions),
     state.activeRecipe,
     settings.tolerance,
   );

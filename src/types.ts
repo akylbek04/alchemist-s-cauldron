@@ -63,6 +63,22 @@ export interface IGameState {
   shelfStock: Record<string, number>; // ingredient id -> portions left
 }
 
+export interface IReaction {
+  id: string;
+  name: string;
+  difficulty: Exclude<Difficulty, 'easy'>;
+  trigger: string; // shown in Help
+  effect: string; // shown in Help and in the message when it fires
+  // Checked on the ingredient list (and its plain sums, before any reaction).
+  isActive: (ingredients: readonly IIngredient[]) => boolean;
+  // Changes the cauldron values for as long as the reaction stays active.
+  apply: (values: ICauldronValues) => ICauldronValues;
+  // One-time costs, paid only when the reaction fires.
+  timePenalty?: number; // seconds
+  lifePenalty?: number;
+  clearsCauldron?: boolean;
+}
+
 export interface ILeaderboardEntry {
   name: string;
   score: number;
