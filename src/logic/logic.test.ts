@@ -14,6 +14,7 @@ import {
   qualifies,
   sortEntries,
 } from './leaderboard.ts';
+import { parseSave } from './save.ts';
 import { formatTime, getEndTime, getTimeLeft } from './timer.ts';
 import type { IGameState, IIngredient, ILeaderboardEntry, IRecipe } from '../types.ts';
 
@@ -250,3 +251,61 @@ const mixed = parseEntries([
   entry('Also', 400, 2),
 ]);
 check(mixed.map((e) => e.name).join() === 'Also,Good', 'only valid entries, sorted');
+
+// Save: valid unfinished games round-trip through JSON, the rest is rejected.
+const catalogue: IIngredient[] = Array.from({ length: 8 }, (_, i) => ({
+  ...tears,
+  id: `i${String(i)}`,
+}));
+const easyRecipe = RECIPES.find((r) => r.difficulty === 'easy');
+check(easyRecipe !== undefined, 'an easy recipe exists');
+const saved: IGameState = {
+  difficulty: 'easy',
+  status: 'playing',
+  score: 300,
+  timeLeft: 97.25,
+  lives: 4,
+  activeRecipe: easyRecipe ?? recipe,
+  cauldronIngredients: [catalogue[1] ?? tears, catalogue[1] ?? tears],
+  shelfStock: { i0: 0, i1: 3, i2: 15, i3: 7 },
+};
+const restored = parseSave(JSON.parse(JSON.stringify(saved)), catalogue);
+check(JSON.stringify(restored) === JSON.stringify(saved), 'a valid save is restored as it was');
+check(restored?.cauldronIngredients[0] === catalogue[1], 'ingredients come from the catalogue');
+check(restored?.activeRecipe === easyRecipe, 'the recipe comes from the recipe table');
+check(parseSave({ ...saved, status: 'paused' }, catalogue)?.status === 'paused', 'paused is kept');
+
+const broken: [string, unknown][] = [
+  ['null', null],
+  ['text', 'save'],
+  ['finished game', { ...saved, status: 'game-over' }],
+  ['no lives', { ...saved, lives: 0 }],
+  ['no time', { ...saved, timeLeft: 0 }],
+  [
+    'out of ingredients',
+    { ...saved, cauldronIngredients: [], shelfStock: { i0: 0, i1: 0, i2: 0, i3: 0 } },
+  ],
+  ['unknown difficulty', { ...saved, difficulty: 'insane' }],
+  ['more lives than allowed', { ...saved, lives: 6 }],
+  ['time above the start time', { ...saved, timeLeft: 181 }],
+  ['NaN time', { ...saved, timeLeft: Number.NaN }],
+  ['fractional score', { ...saved, score: 1.5 }],
+  ['score as text', { ...saved, score: '300' }],
+  [
+    'recipe of another difficulty',
+    { ...saved, activeRecipe: RECIPES.find((r) => r.difficulty === 'hard') },
+  ],
+  ['unknown recipe', { ...saved, activeRecipe: { id: 'nope' } }],
+  ['stock above 15', { ...saved, shelfStock: { ...saved.shelfStock, i0: 16 } }],
+  ['missing stock', { ...saved, shelfStock: { i0: 1, i1: 1, i2: 1 } }],
+  [
+    'stock of an ingredient not on this shelf',
+    { ...saved, shelfStock: { ...saved.shelfStock, i5: 1 } },
+  ],
+  ['cauldron over the limit', { ...saved, cauldronIngredients: Array(5).fill(catalogue[0]) }],
+  ['ingredient not on this shelf', { ...saved, cauldronIngredients: [catalogue[6]] }],
+  ['cauldron not an array', { ...saved, cauldronIngredients: {} }],
+];
+for (const [name, data] of broken) {
+  check(parseSave(data, catalogue) === null, `broken save must be rejected: ${name}`);
+}

@@ -67,8 +67,13 @@
           <img class="round-button__icon" src="/src/assets/icons/help.svg" alt="" />
           <span>Help</span>
         </button>
-        <button class="main-button" id="start-button" type="button">Start Game</button>
-        <button class="main-button" id="brew-button" type="button" hidden>Brew</button>
+        <div class="controls__main">
+          <button class="main-button" id="continue-button" type="button" hidden>
+            Continue Game
+          </button>
+          <button class="main-button" id="start-button" type="button">Start Game</button>
+          <button class="main-button" id="brew-button" type="button" hidden>Brew</button>
+        </div>
         <div class="controls__side">
           <button class="round-button" id="settings-button" type="button">
             <img class="round-button__icon" src="/src/assets/icons/settings.svg" alt="" />
@@ -234,6 +239,7 @@
       closedby="none"
     >
       <h2 class="dialog__title dialog__title--large" id="pause-title">Game Paused</h2>
+      <p class="dialog__text" id="pause-note" hidden>Your saved game is restored.</p>
       <div class="dialog__actions">
         <button class="main-button main-button--menu" id="resume-button" type="button">
           Resume
