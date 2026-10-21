@@ -69,7 +69,10 @@
         </button>
         <button class="main-button" id="start-button" type="button">Start Game</button>
         <button class="main-button" id="brew-button" type="button" hidden>Brew</button>
-        <span class="controls__spacer" aria-hidden="true"></span>
+        <button class="round-button" id="leaderboard-button" type="button">
+          <img class="round-button__icon" src="/src/assets/icons/trophy.svg" alt="" />
+          <span>Leaders</span>
+        </button>
       </footer>
     </div>
 
@@ -112,7 +115,82 @@
       <p class="game-over__reason" id="game-over-reason"></p>
       <p class="game-over__label">Final Score:</p>
       <p class="game-over__score" id="final-score">0</p>
-      <button class="main-button" id="play-again-button" type="button">Play again</button>
+      <form class="name-form" id="name-form" novalidate hidden>
+        <label class="name-form__label" for="player-name">Enter your name (2–15 chars):</label>
+        <input
+          class="name-form__input"
+          id="player-name"
+          name="name"
+          type="text"
+          maxlength="15"
+          autocomplete="nickname"
+          spellcheck="false"
+          placeholder="AlchemistName"
+          aria-describedby="name-hint name-error"
+        />
+        <p class="name-form__hint" id="name-hint">Letters, digits, space, _ and -</p>
+        <p class="name-form__error" id="name-error" role="alert"></p>
+        <button class="main-button main-button--small" type="submit">Submit Score</button>
+      </form>
+      <p class="game-over__saved" id="saved-message" role="status" hidden></p>
+      <div class="dialog__buttons">
+        <button class="main-button main-button--small" id="play-again-button" type="button">
+          Play again
+        </button>
+        <button
+          class="main-button main-button--small main-button--secondary"
+          id="game-over-leaderboard-button"
+          type="button"
+        >
+          Leaderboard
+        </button>
+      </div>
+    </dialog>
+
+    <dialog
+      class="dialog dialog--leaderboard"
+      id="leaderboard-dialog"
+      aria-labelledby="leaderboard-title"
+    >
+      <h2 class="leaderboard__title" id="leaderboard-title">Top Alchemists Leaderboard</h2>
+      <div class="leaderboard__table-wrap">
+        <table class="leaderboard__table">
+          <thead>
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Name</th>
+              <th scope="col">Score</th>
+              <th scope="col">Date</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+      <p class="leaderboard__empty" id="leaderboard-empty">
+        No results yet. Brew some potions to get on the board!
+      </p>
+      <div class="dialog__buttons">
+        <button class="danger-button" id="clear-leaderboard-button" type="button">
+          Clear Leaderboard
+        </button>
+        <button
+          class="main-button main-button--small"
+          id="leaderboard-back-button"
+          type="button"
+          autofocus
+        >
+          Back
+        </button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog dialog--confirm" id="confirm-dialog" aria-labelledby="confirm-title">
+      <h2 class="dialog__title" id="confirm-title">Clear the leaderboard?</h2>
+      <p class="dialog__text">All saved results will be removed. This cannot be undone.</p>
+      <form class="dialog__buttons" method="dialog">
+        <button class="main-button main-button--small" value="cancel" autofocus>Cancel</button>
+        <button class="danger-button" value="confirm">Clear</button>
+      </form>
     </dialog>
 
     <dialog

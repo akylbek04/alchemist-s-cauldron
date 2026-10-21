@@ -48,6 +48,10 @@ button {
   color: inherit;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -864,7 +868,7 @@ button {
   line-height: 1.45;
 }
 
-.dialog form {
+.dialog form[method='dialog'] {
   display: flex;
   justify-content: center;
 }
@@ -971,6 +975,215 @@ button {
   font-size: clamp(2.5rem, 10vw, 4rem);
   color: #d9f5b8;
   text-shadow: 0 0 14px rgb(156 255 79 / 60%);
+}
+
+/* Shared dialog parts */
+
+.dialog__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.dialog__text {
+  margin: 0;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.main-button--secondary {
+  border-color: var(--bronze-light);
+  background: linear-gradient(180deg, #2a2118, #120e0a);
+  color: var(--gold);
+  text-shadow: none;
+  box-shadow: none;
+}
+
+.danger-button {
+  padding: 12px 22px;
+  border: 2px solid #e0533d;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #6b1a12, #3a0d08);
+  font-family: var(--heading);
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #ffd9cf;
+  cursor: pointer;
+}
+
+.danger-button:hover:not(:disabled) {
+  box-shadow: 0 0 16px rgb(224 83 61 / 55%);
+}
+
+.danger-button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Name form on the Game Over screen */
+
+.name-form {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.name-form__label {
+  font-size: 1.125rem;
+  color: var(--gold);
+}
+
+.name-form__input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid var(--bronze);
+  border-radius: 6px;
+  background: #0d0b09;
+  font: inherit;
+  font-size: 1.125rem;
+  color: var(--text);
+  text-align: center;
+}
+
+.name-form__input:focus-visible {
+  outline: 3px solid var(--green);
+  outline-offset: 2px;
+}
+
+.name-form__input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.name-form__hint {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.name-form__error {
+  min-height: 1.25em;
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--red);
+}
+
+.name-form__error:empty {
+  min-height: 0;
+}
+
+.game-over__saved {
+  margin: 0;
+  font-family: var(--heading);
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* Leaderboard */
+
+.dialog--leaderboard {
+  width: min(760px, calc(100% - 24px));
+  padding: 28px clamp(12px, 3vw, 32px);
+  border: 3px solid #6b5634;
+  background: radial-gradient(ellipse at 50% 35%, var(--parchment), var(--parchment-dark) 130%);
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 40px rgb(110 80 40 / 50%),
+    0 0 0 4px #120e0a,
+    0 0 0 6px var(--bronze);
+}
+
+.leaderboard__title {
+  margin: 0 0 18px;
+  font-family: var(--heading);
+  font-weight: 900;
+  font-size: clamp(1.375rem, 4.5vw, 2.25rem);
+  text-align: center;
+  color: #5a1a12;
+}
+
+.leaderboard__table-wrap {
+  overflow-x: auto;
+}
+
+.leaderboard__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(0.875rem, 2.4vw, 1.0625rem);
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard__table th {
+  padding: 8px 6px;
+  background: #3a2a1c;
+  font-family: var(--heading);
+  font-weight: 700;
+  color: var(--parchment);
+}
+
+.leaderboard__table td {
+  padding: 7px 6px;
+  border-bottom: 1px solid rgb(90 64 36 / 35%);
+  text-align: center;
+}
+
+.leaderboard__name {
+  overflow-wrap: anywhere;
+}
+
+.leaderboard__score {
+  font-weight: 700;
+}
+
+.leaderboard__row--new td {
+  background: rgb(156 255 79 / 35%);
+  font-weight: 700;
+}
+
+.rank {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-family: var(--heading);
+  font-weight: 700;
+}
+
+.rank--1,
+.rank--2,
+.rank--3 {
+  border: 2px solid #3a2a1c;
+  color: #1b130c;
+}
+
+.rank--1 {
+  background: radial-gradient(circle at 35% 30%, #fff2b0, #d4a017 70%);
+}
+
+.rank--2 {
+  background: radial-gradient(circle at 35% 30%, #ffffff, #9aa3ad 70%);
+}
+
+.rank--3 {
+  background: radial-gradient(circle at 35% 30%, #ffd2a8, #b0682b 70%);
+}
+
+.leaderboard__empty {
+  margin: 16px 0 0;
+  font-style: italic;
+  text-align: center;
+}
+
+.dialog--confirm {
+  width: min(440px, calc(100% - 32px));
+  border-color: #e0533d;
 }
 
 @media (max-width: 480px) {

@@ -60,3 +60,9 @@ export interface IGameState {
   cauldronIngredients: IIngredient[];
   shelfStock: Record<string, number>; // ingredient id -> portions left
 }
+
+export interface ILeaderboardEntry {
+  name: string;
+  score: number;
+  date: number; // timestamp from Date.now()
+}
