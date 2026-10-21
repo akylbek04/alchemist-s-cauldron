@@ -36,6 +36,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 2.1 — difficulty selection
 - [x] US 2.2 — auto-save & continue game
 - [x] US 3.1 — drag & drop
+- [x] US 3.2 — ingredient tooltip
 
 Level 1 is complete.
 
@@ -58,7 +59,7 @@ Level 1 is complete.
   Recipes come only from the chosen difficulty. The difficulty can't be changed during a game. The rest of this list describes **Medium**.
 
 - The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
-- The shelf shows 6 ingredients. Each card shows its **T**emperature, **D**ensity and **M**agic **P**ower and a badge with the portions left (random 2–15 per game).
+- The shelf shows 6 ingredients. Each card shows only its icon, name and a badge with the portions left (random 2–15 per game). Hover a card (or focus it with the keyboard) to see its **Temperature**, **Density** and **Magic Power** in a tooltip, with `+` / `−` signs. Near the right or bottom screen edge the tooltip opens to the left or upward; it is hidden while the game is paused.
 - Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron, or drag the card into the cauldron with the mouse (the cauldron glows while a valid card is over it). A drop follows the same rules as a click: nothing happens when the cauldron is full or the game is paused, and empty slots can't be dragged. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
 - The cauldron holds up to 4 ingredients. When it is full (**4 / 4**, highlighted), the shelf is blocked.
 - The 3 bars show the cauldron's values (the sum of the added ingredients, starting at 0 / 0 / 0). The green zone is the recipe's target range, the diamond is the current value, and a bar glows when its value is inside the range. Temperature and Density can go negative: `0` is the center.
