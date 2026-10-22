@@ -7,7 +7,7 @@ import type {
   IRecipeRange,
   ParameterKey,
 } from '../types.ts';
-import { isInRange } from './cauldron.ts';
+import { clearCauldron, isInRange } from './cauldron.ts';
 import { getCauldronValues } from './reactions.ts';
 
 const PARAMETER_KEYS: readonly ParameterKey[] = ['temperature', 'density', 'magicPower'];
@@ -52,16 +52,15 @@ export function brew(
     return {
       success,
       state: {
-        ...state,
+        ...clearCauldron(state),
         score: state.score + settings.scorePerBrew,
         timeLeft: Math.min(settings.startTime, state.timeLeft + settings.timeBonus),
         activeRecipe: nextRecipe(),
-        cauldronIngredients: [],
       },
     };
   }
   return {
     success,
-    state: { ...state, lives: state.lives - 1, cauldronIngredients: [] },
+    state: { ...clearCauldron(state), lives: state.lives - 1 },
   };
 }

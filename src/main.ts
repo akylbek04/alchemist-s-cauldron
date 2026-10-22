@@ -8,7 +8,7 @@ import {
 import { PARAMETERS } from './data/parameters.ts';
 import { REACTIONS } from './data/reactions.ts';
 import { brew, canBrew } from './logic/brew-check.ts';
-import { addIngredient, isCauldronFull } from './logic/cauldron.ts';
+import { addIngredient, canPourOut, isCauldronFull, pourOut } from './logic/cauldron.ts';
 import { getGameOverReason } from './logic/game-over.ts';
 import { addEntry, isValidName, qualifies } from './logic/leaderboard.ts';
 import {
@@ -78,6 +78,7 @@ const pauseButton = getElement('#pause-button') as HTMLButtonElement;
 const clockIcon = getElement('#clock-icon');
 const pauseDialog = getElement('#pause-dialog') as HTMLDialogElement;
 const brewButton = getElement('#brew-button') as HTMLButtonElement;
+const pourButton = getElement('#pour-button') as HTMLButtonElement;
 const helpDialog = getElement('#help-dialog') as HTMLDialogElement;
 const helpReactions = getElement('#help-reactions');
 
@@ -301,6 +302,8 @@ function render(): void {
   leaderboardButton.hidden = state !== null;
   brewButton.hidden = state === null;
   brewButton.disabled = !state || !isPlaying || !canBrew(state);
+  pourButton.hidden = state === null;
+  pourButton.disabled = !state || !isPlaying || !canPourOut(state);
   continueButton.hidden = state !== null || savedGame === null;
 
   persist();
@@ -335,6 +338,17 @@ brewButton.addEventListener('click', () => {
   } else {
     showMessage('The mixture failed! −1 life', 'failure');
   }
+  render();
+  checkGameOver();
+});
+
+// Clears a wrong mix for 10 s instead of a life.
+pourButton.addEventListener('click', () => {
+  if (state?.status !== 'playing' || !canPourOut(state)) return;
+  syncTime();
+  state = pourOut(state);
+  startClock();
+  showMessage('Poured out! −10 s', 'failure');
   render();
   checkGameOver();
 });

@@ -1,5 +1,12 @@
 // Run with `npm test` (Node's built-in runner strips the types).
-import { addIngredient, calculateCauldron, isCauldronFull, isInRange } from './cauldron.ts';
+import {
+  addIngredient,
+  calculateCauldron,
+  canPourOut,
+  isCauldronFull,
+  isInRange,
+  pourOut,
+} from './cauldron.ts';
 import { getRecipesByDifficulty, pickRandom } from './recipe-generator.ts';
 import { createStock, MAX_STOCK, MIN_STOCK } from './stock.ts';
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
@@ -390,3 +397,21 @@ const mixing: IGameState = {
 };
 check(brew(mixing, medium, () => next, medium3).success, 'brew uses the reacted values');
 check(!brew(mixing, medium, () => next, []).success, 'without the reaction the brew fails');
+
+// Pour Out: clears the cauldron for 10 s, keeps lives, score, recipe and stock.
+const poured = pourOut(brewing);
+check(poured.cauldronIngredients.length === 0, 'pour out clears the cauldron');
+check(poured.timeLeft === 135, 'pour out costs 10 s (145 -> 135)');
+check(
+  poured.lives === 3 && poured.score === 0 && poured.activeRecipe === recipe,
+  'pour out keeps lives, score and recipe',
+);
+check(
+  poured.shelfStock.a === 1 && poured.shelfStock.b === 1,
+  'poured ingredients are not returned',
+);
+check(
+  !canPourOut(poured) && pourOut(poured) === poured,
+  'empty cauldron: no pour out, no time cost',
+);
+check(pourOut({ ...brewing, timeLeft: 4 }).timeLeft === 0, 'pour out never goes below 0 s');

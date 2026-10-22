@@ -532,6 +532,15 @@ button {
   counter-reset: cauldron;
 }
 
+.cauldron__pour {
+  padding: 6px 16px;
+  font-size: 0.95rem;
+}
+
+.cauldron__pour-cost {
+  color: var(--warning);
+}
+
 .cauldron__list:empty::before {
   content: 'The cauldron is empty';
   align-self: center;

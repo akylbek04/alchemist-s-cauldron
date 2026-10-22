@@ -48,6 +48,14 @@
         <section class="cauldron" id="cauldron" aria-label="Cauldron">
           <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
           <ol class="cauldron__list" id="cauldron-list" aria-label="In the cauldron"></ol>
+          <button
+            class="main-button main-button--small main-button--secondary cauldron__pour"
+            id="pour-button"
+            type="button"
+            hidden
+          >
+            Pour Out <span class="cauldron__pour-cost">−10 s</span>
+          </button>
           <p class="message" id="message" role="status"></p>
         </section>
 
