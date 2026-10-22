@@ -3,6 +3,7 @@ import { addIngredient, calculateCauldron, isCauldronFull, isInRange } from './c
 import { getRecipesByDifficulty, pickRandom } from './recipe-generator.ts';
 import { createStock, MAX_STOCK, MIN_STOCK } from './stock.ts';
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
+import { REACTIONS } from '../data/reactions.ts';
 import { RECIPES } from '../data/recipes.ts';
 import { brew, canBrew, isBrewSuccessful } from './brew-check.ts';
 import { getGameOverReason, isOutOfIngredients } from './game-over.ts';
@@ -14,9 +15,15 @@ import {
   qualifies,
   sortEntries,
 } from './leaderboard.ts';
+import {
+  applyReactionCosts,
+  getCauldronValues,
+  getFiredReactions,
+  getReactions,
+} from './reactions.ts';
 import { parseSave } from './save.ts';
 import { formatTime, getEndTime, getTimeLeft } from './timer.ts';
-import type { IGameState, IIngredient, ILeaderboardEntry, IRecipe } from '../types.ts';
+import type { Difficulty, IGameState, IIngredient, ILeaderboardEntry, IRecipe } from '../types.ts';
 
 function check(condition: boolean, message: string): void {
   if (!condition) {
@@ -163,7 +170,7 @@ const brewing: IGameState = {
 };
 check(canBrew(brewing) && !canBrew({ ...brewing, cauldronIngredients: [] }), 'brew needs 1+');
 
-const won = brew(brewing, medium, () => next);
+const won = brew(brewing, medium, () => next, []);
 check(won.success, 'worked example brews');
 check(won.state.score === 200, 'success adds 200');
 check(won.state.timeLeft === 150, 'time bonus is capped at the start time (145 + 10 -> 150)');
@@ -171,7 +178,7 @@ check(won.state.activeRecipe === next, 'success picks a new recipe');
 check(won.state.cauldronIngredients.length === 0, 'success clears the cauldron');
 check(won.state.shelfStock.a === 1 && won.state.lives === 3, 'stock and lives untouched');
 
-const lost = brew({ ...brewing, cauldronIngredients: [frost] }, medium, () => next);
+const lost = brew({ ...brewing, cauldronIngredients: [frost] }, medium, () => next, []);
 check(!lost.success, 'wrong mix fails');
 check(lost.state.lives === 2 && lost.state.score === 0, 'failure costs 1 life, no score');
 check(lost.state.activeRecipe === recipe, 'failure keeps the recipe');
@@ -309,3 +316,77 @@ const broken: [string, unknown][] = [
 for (const [name, data] of broken) {
   check(parseSave(data, catalogue) === null, `broken save must be rejected: ${name}`);
 }
+
+// Reactions: the count per difficulty comes from the difficulty table.
+for (const level of ['easy', 'medium', 'hard'] as const satisfies readonly Difficulty[]) {
+  const count = getReactions(REACTIONS, level).length;
+  check(count === DIFFICULTY_SETTINGS[level].reactions, `${level} must have its reaction count`);
+}
+const medium3 = getReactions(REACTIONS, 'medium');
+const hard3 = getReactions(REACTIONS, 'hard');
+function real(id: string, temperature: number, density: number, magicPower: number): IIngredient {
+  return { id, name: id, icon: '', temperature, density, magicPower };
+}
+const fairy = real('fairy-dust', 12, 9, 12);
+const acid = real('caustic-acid', 10, 14, 22);
+const dragon = real('dragon-tears', 25, 8, 10);
+const lotus = real('frost-lotus', -18, 4, 14);
+const phoenix = real('phoenix-feather', 50, -10, 30);
+const voidEssence = real('essence-of-the-void', -20, -10, 40);
+const slime = real('toad-slime', 5, 30, 0);
+const mandrake = real('mandrake-root', -5, 20, 8);
+
+// Values are rebuilt from the list: sums, then active reactions.
+const bubbled = getCauldronValues([fairy, acid], medium3);
+check(bubbled.magicPower === 51 && bubbled.temperature === 22, 'Bubbling: Magic Power 34 +50%');
+check(getCauldronValues([fairy, acid], []).magicPower === 34, 'no reactions: plain sums');
+check(getCauldronValues([fairy, acid], hard3).magicPower === 34, 'Medium reaction is off on Hard');
+const frosted = getCauldronValues([dragon, lotus], medium3);
+check(frosted.temperature === 0 && frosted.density === 14, 'Solar Frost: T 0, D 12 +20%');
+const spiked = getCauldronValues([slime, slime, slime], hard3);
+check(spiked.density === 70, 'Pressure Spike: Density 90 set to 70');
+const rooted = getCauldronValues([mandrake, phoenix], hard3);
+check(rooted.temperature === 60 && rooted.density === 9, 'Burning Root: T 45 +15, D 10 −10%');
+check(getCauldronValues([mandrake, lotus], hard3).temperature === -23, 'Burning Root needs T ≥ 40');
+
+// Fires only on the change from not active to active.
+const names = (list: readonly { id: string }[]): string => list.map((r) => r.id).join();
+check(names(getFiredReactions([fairy], [fairy, acid], medium3)) === 'bubbling', 'fires on start');
+check(getFiredReactions([fairy, acid], [fairy, acid, dragon], medium3).length === 0, 'no refire');
+check(
+  names(getFiredReactions([fairy, acid, dragon], [fairy, acid, dragon, lotus], medium3)) ===
+    'solar-frost',
+  'a second reaction fires on its own',
+);
+check(names(getFiredReactions([], [fairy, acid], medium3)) === 'bubbling', 'fires again later');
+
+// One-time costs.
+const reacting: IGameState = { ...brewing, timeLeft: 8, cauldronIngredients: [fairy, acid] };
+const bubbledState = applyReactionCosts(
+  reacting,
+  getFiredReactions([fairy], [fairy, acid], medium3),
+);
+check(bubbledState.timeLeft === 0 && bubbledState.lives === 3, 'Bubbling: −10 s, never below 0');
+const volatile = applyReactionCosts(
+  { ...brewing, cauldronIngredients: [phoenix, voidEssence] },
+  getFiredReactions([phoenix], [phoenix, voidEssence], hard3),
+);
+check(
+  volatile.lives === 2 && volatile.cauldronIngredients.length === 0,
+  'Volatile Mix: −1 life, clear',
+);
+
+// Brew checks the reacted values: plain Magic Power 34 misses 45..55, Bubbling makes 51.
+const bubblingRecipe: IRecipe = {
+  ...recipe,
+  temperature: { min: 17, max: 27 },
+  density: { min: 18, max: 28 },
+  magicPower: { min: 45, max: 55 },
+};
+const mixing: IGameState = {
+  ...brewing,
+  activeRecipe: bubblingRecipe,
+  cauldronIngredients: [fairy, acid],
+};
+check(brew(mixing, medium, () => next, medium3).success, 'brew uses the reacted values');
+check(!brew(mixing, medium, () => next, []).success, 'without the reaction the brew fails');

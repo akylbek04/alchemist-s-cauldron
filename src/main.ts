@@ -6,10 +6,17 @@ import {
   DIFFICULTY_SETTINGS,
 } from './data/difficulty.ts';
 import { PARAMETERS } from './data/parameters.ts';
+import { REACTIONS } from './data/reactions.ts';
 import { brew, canBrew } from './logic/brew-check.ts';
-import { addIngredient, calculateCauldron, isCauldronFull } from './logic/cauldron.ts';
+import { addIngredient, isCauldronFull } from './logic/cauldron.ts';
 import { getGameOverReason } from './logic/game-over.ts';
 import { addEntry, isValidName, qualifies } from './logic/leaderboard.ts';
+import {
+  applyReactionCosts,
+  getCauldronValues,
+  getFiredReactions,
+  getReactions,
+} from './logic/reactions.ts';
 import { getEndTime, getTimeLeft } from './logic/timer.ts';
 import { createGameState, getShelfIngredients, pickRecipe } from './state/game-state.ts';
 import { clearLeaderboard, loadLeaderboard, saveLeaderboard } from './storage/leaderboard.ts';
@@ -20,6 +27,7 @@ import type {
   IGameState,
   IIngredient,
   ILeaderboardEntry,
+  IReaction,
 } from './types.ts';
 import { createBars } from './ui/bars.ts';
 import { createDropZone, renderCauldron } from './ui/cauldron.ts';
@@ -28,7 +36,7 @@ import { getElement } from './ui/dom.ts';
 import { renderHud } from './ui/hud.ts';
 import { renderLeaderboard } from './ui/leaderboard.ts';
 import { createRecipePanel } from './ui/recipe.ts';
-import { createSettingsPanel, renderHelp } from './ui/settings.ts';
+import { createSettingsPanel, renderHelp, renderReactions } from './ui/settings.ts';
 import { createShelf, type UpdateShelf } from './ui/shelf.ts';
 
 const hud = {
@@ -71,6 +79,7 @@ const clockIcon = getElement('#clock-icon');
 const pauseDialog = getElement('#pause-dialog') as HTMLDialogElement;
 const brewButton = getElement('#brew-button') as HTMLButtonElement;
 const helpDialog = getElement('#help-dialog') as HTMLDialogElement;
+const helpReactions = getElement('#help-reactions');
 
 // null = start screen: empty shelf and cauldron, score and time 0, no lives.
 let state: IGameState | null = null;
@@ -98,12 +107,27 @@ function getSettings(): IDifficultySettings {
   return DIFFICULTY_SETTINGS[state?.difficulty ?? difficulty];
 }
 
+function getActiveReactions(): readonly IReaction[] {
+  return getReactions(REACTIONS, state?.difficulty ?? difficulty);
+}
+
 function addToCauldron(ingredient: IIngredient): void {
   if (state?.status !== 'playing') return;
   const next = addIngredient(state, ingredient, getSettings().maxCauldronIngredients);
   if (next === state) return;
-  state = next;
-  showMessage('');
+  const fired = getFiredReactions(
+    state.cauldronIngredients,
+    next.cauldronIngredients,
+    getActiveReactions(),
+  );
+  // Time costs need the current time left, and then a countdown from the new value.
+  syncTime();
+  state = applyReactionCosts({ ...next, timeLeft: state.timeLeft }, fired);
+  startClock();
+  showMessage(
+    fired.map((reaction) => `${reaction.name}! ${reaction.effect}`).join(' · '),
+    fired.length > 0 ? 'reaction' : undefined,
+  );
   render();
   checkGameOver();
 }
@@ -127,14 +151,16 @@ function applyDifficulty(): void {
   const settings = DIFFICULTY_SETTINGS[difficulty];
   updateShelf = createShelf(shelf, getShelfIngredients(settings), addToCauldron);
   renderHelp(helpDialog, settings);
+  renderReactions(helpReactions, getReactions(REACTIONS, difficulty));
   recipeNote.textContent = `${DIFFICULTY_LABELS[difficulty]} · brew tolerance ±${String(settings.tolerance)}`;
   updateSettings(difficulty);
 }
 
-function showMessage(text: string, type?: 'success' | 'failure'): void {
+function showMessage(text: string, type?: 'success' | 'failure' | 'reaction'): void {
   message.textContent = text;
   message.classList.toggle('message--success', type === 'success');
   message.classList.toggle('message--failure', type === 'failure');
+  message.classList.toggle('message--reaction', type === 'reaction');
 }
 
 function startClock(): void {
@@ -261,7 +287,7 @@ function render(): void {
   );
   renderCauldron(cauldronList, ingredients);
   updateRecipe(state?.activeRecipe ?? null, ingredients.length, settings.maxCauldronIngredients);
-  updateBars(calculateCauldron(ingredients), state?.activeRecipe ?? null);
+  updateBars(getCauldronValues(ingredients, getActiveReactions()), state?.activeRecipe ?? null);
   updateHud();
 
   // While paused the play field is blurred, so nothing can be planned.
@@ -289,7 +315,12 @@ brewButton.addEventListener('click', () => {
   syncTime();
   const before = state;
   const { difficulty: current } = state;
-  const result = brew(state, DIFFICULTY_SETTINGS[current], () => pickRecipe(current));
+  const result = brew(
+    state,
+    DIFFICULTY_SETTINGS[current],
+    () => pickRecipe(current),
+    getActiveReactions(),
+  );
   state = result.state;
   // The brew may add a time bonus: restart the countdown from the new time left.
   startClock();
@@ -386,6 +417,7 @@ document.addEventListener('visibilitychange', () => {
 getElement('#help-button').addEventListener('click', () => {
   // The rules show the numbers of the current game, or of the chosen difficulty.
   renderHelp(helpDialog, getSettings());
+  renderReactions(helpReactions, getActiveReactions());
   helpDialog.showModal();
 });
 

@@ -586,6 +586,11 @@ button {
   color: var(--red);
 }
 
+.message--reaction {
+  color: var(--magic);
+  text-shadow: 0 0 8px rgb(183 124 255 / 50%);
+}
+
 /* Recipe book */
 
 .recipe {
@@ -975,6 +980,32 @@ button {
   margin: 0 0 20px;
   padding-left: 1.25em;
   line-height: 1.45;
+}
+
+.reactions {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding-left: 1.1em;
+}
+
+.reactions__item {
+  display: grid;
+}
+
+.reactions__name {
+  color: var(--magic);
+}
+
+.reactions__trigger,
+.reactions__effect,
+.reactions__empty {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.reactions__effect::before {
+  content: '→ ';
 }
 
 .dialog form[method='dialog'] {
