@@ -2,7 +2,22 @@ import type { IIngredient } from '../types.ts';
 import { createElement } from './dom.ts';
 import { DRAG_TYPE } from './shelf.ts';
 
-export function renderCauldron(list: HTMLElement, ingredients: readonly IIngredient[]): void {
+// The list under the pot, plus the same icons floating in the liquid.
+export function renderCauldron(
+  list: HTMLElement,
+  floats: HTMLElement,
+  ingredients: readonly IIngredient[],
+): void {
+  floats.replaceChildren(
+    ...ingredients.map((ingredient, index) => {
+      const icon = createElement('img', 'cauldron__float');
+      icon.src = ingredient.icon;
+      icon.alt = '';
+      // Only the start offset comes from here; the movement is a CSS animation.
+      icon.style.setProperty('--i', String(index));
+      return icon;
+    }),
+  );
   list.replaceChildren(
     ...ingredients.map((ingredient) => {
       const item = createElement('li', 'cauldron__item');
@@ -13,6 +28,19 @@ export function renderCauldron(list: HTMLElement, ingredients: readonly IIngredi
       return item;
     }),
   );
+}
+
+// Plays a CSS animation class again from the start (timing lives in the CSS).
+// The other effect classes are removed so only the latest result shows.
+export function playEffect(
+  element: HTMLElement,
+  effect: string,
+  others: readonly string[] = [],
+): void {
+  element.classList.remove(effect, ...others);
+  // Reading the layout makes the browser drop the old animation before it is added again.
+  element.getBoundingClientRect();
+  element.classList.add(effect);
 }
 
 // The cauldron accepts ingredient cards dragged from the shelf.

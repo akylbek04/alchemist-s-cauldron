@@ -1500,11 +1500,198 @@ button {
   }
 }
 
+/* Visual feedback (US 3.5): every effect is a CSS animation started by a class. */
+
+.cauldron__vessel {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  width: 100%;
+}
+
+/* The icons float on the liquid surface near the top of the pot. */
+.cauldron__floats {
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  display: flex;
+  justify-content: center;
+  gap: clamp(2px, 1.5vw, 10px);
+  width: min(240px, 50%);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.cauldron__float {
+  width: clamp(22px, 6vw, 36px);
+  height: clamp(22px, 6vw, 36px);
+  filter: drop-shadow(0 0 6px rgb(156 255 79 / 70%));
+  animation:
+    float-in 0.5s ease-out both,
+    bob 2.4s ease-in-out calc(var(--i, 0) * -0.6s) infinite alternate;
+}
+
+@keyframes float-in {
+  from {
+    opacity: 0;
+    translate: 0 -40px;
+    scale: 0.6;
+  }
+}
+
+@keyframes bob {
+  from {
+    transform: translateY(-4px) rotate(-10deg);
+  }
+
+  to {
+    transform: translateY(5px) rotate(10deg);
+  }
+}
+
+.is-paused .cauldron__float {
+  animation-play-state: paused;
+}
+
+/* Success: green flash through the pot and a ring of light. */
+.cauldron__burst {
+  position: absolute;
+  top: 8%;
+  left: 50%;
+  width: min(360px, 80%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translateX(-50%) scale(0.2);
+  pointer-events: none;
+}
+
+.cauldron--success .cauldron__burst {
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / 0%) 45%,
+    rgb(156 255 79 / 70%) 60%,
+    transparent 70%
+  );
+  animation: ring 0.9s ease-out;
+}
+
+.cauldron--success .cauldron__pot {
+  animation: success-glow 0.9s ease-out;
+}
+
+@keyframes ring {
+  20% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.4);
+  }
+}
+
+@keyframes success-glow {
+  35% {
+    filter: drop-shadow(0 0 60px rgb(156 255 79 / 100%)) brightness(1.25);
+    transform: scale(1.05);
+  }
+}
+
+/* Failure: an orange-red explosion over the pot. */
+.cauldron--fail .cauldron__burst {
+  background: radial-gradient(
+    circle,
+    rgb(255 240 180 / 95%) 0,
+    rgb(255 140 50 / 85%) 25%,
+    rgb(224 83 61 / 60%) 45%,
+    transparent 70%
+  );
+  animation: explode 0.7s ease-out;
+}
+
+.cauldron--fail .cauldron__pot {
+  animation: fail-flash 0.7s ease-out;
+}
+
+@keyframes explode {
+  15% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.5);
+  }
+}
+
+@keyframes fail-flash {
+  20% {
+    filter: drop-shadow(0 0 50px rgb(224 83 61 / 100%)) sepia(1) hue-rotate(-50deg) saturate(3);
+  }
+}
+
+/* Short screen shake on a failed brew. */
+.game--shake {
+  animation: shake 0.45s ease-in-out;
+}
+
+@keyframes shake {
+  15%,
+  55% {
+    transform: translateX(-8px);
+  }
+
+  35%,
+  75% {
+    transform: translateX(8px);
+  }
+
+  90% {
+    transform: translateX(-3px);
+  }
+}
+
+/* Floating "+10s" after a successful brew. */
+.cauldron__gain {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  margin: 0;
+  font-family: var(--heading);
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 700;
+  color: var(--green);
+  text-shadow: 0 0 12px rgb(156 255 79 / 80%);
+  opacity: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.cauldron--success .cauldron__gain {
+  animation: rise 1.2s ease-out;
+}
+
+@keyframes rise {
+  15% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-50%, -60px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+
+  .cauldron__float {
+    animation: none;
   }
 }
