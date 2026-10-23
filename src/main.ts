@@ -429,6 +429,55 @@ confirmDialog.addEventListener('close', () => {
 pauseButton.addEventListener('click', pauseGame);
 getElement('#resume-button').addEventListener('click', resumeGame);
 getElement('#exit-button').addEventListener('click', exitToMenu);
+// Esc on the pause screen is the dialog's own close request: it resumes the game
+// instead of closing the dialog and leaving the run paused.
+pauseDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  resumeGame();
+});
+
+// All game shortcuts live here. They work only during active play: the start,
+// pause and Game Over screens keep normal browser keys.
+const SHORTCUTS: Record<string, () => void> = {
+  b: () => {
+    brewButton.click();
+  },
+  o: () => {
+    pourButton.click();
+  },
+  p: pauseGame,
+  escape: pauseGame,
+};
+
+function isTyping(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+  );
+}
+
+document.addEventListener('keydown', (event) => {
+  if (state?.status !== 'playing') return;
+  // Help and other dialogs open during play keep their own keys.
+  if (document.querySelector('dialog[open]')) return;
+  if (event.ctrlKey || event.metaKey || event.altKey || event.repeat || isTyping(event.target)) {
+    return;
+  }
+  const key = event.key.toLowerCase();
+  // 1..N adds the N-th shelf ingredient, through the same checks as a click.
+  const ingredient = /^[1-9]$/.test(key)
+    ? getShelfIngredients(getSettings())[Number(key) - 1]
+    : undefined;
+  if (ingredient) {
+    event.preventDefault();
+    addToCauldron(ingredient);
+    return;
+  }
+  const action = SHORTCUTS[key];
+  if (!action) return;
+  event.preventDefault();
+  action();
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
