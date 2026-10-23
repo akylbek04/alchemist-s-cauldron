@@ -1,6 +1,8 @@
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
 import { INGREDIENTS } from '../data/ingredients.ts';
+import { REACTIONS } from '../data/reactions.ts';
 import { RECIPES } from '../data/recipes.ts';
+import { getReactions, pickReactions } from '../logic/reactions.ts';
 import { getRecipesByDifficulty, pickRandom } from '../logic/recipe-generator.ts';
 import { createStock } from '../logic/stock.ts';
 import type {
@@ -30,5 +32,8 @@ export function createGameState(difficulty: Difficulty): IGameState {
     activeRecipe: pickRecipe(difficulty),
     cauldronIngredients: [],
     shelfStock: createStock(getShelfIngredients(settings)),
+    reactionIds: pickReactions(getReactions(REACTIONS, difficulty), settings.reactions).map(
+      (reaction) => reaction.id,
+    ),
   };
 }

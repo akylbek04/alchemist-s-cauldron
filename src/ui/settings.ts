@@ -44,13 +44,18 @@ export function renderHelp(root: HTMLElement, settings: IDifficultySettings): vo
   }
 }
 
-// The reactions of the current difficulty, listed in Help.
-export function renderReactions(root: HTMLElement, reactions: readonly IReaction[]): void {
+// The reactions listed in Help, after a short intro line.
+export function renderReactions(
+  root: HTMLElement,
+  reactions: readonly IReaction[],
+  intro: string,
+): void {
   if (reactions.length === 0) {
     root.replaceChildren(createElement('li', 'reactions__empty', 'No reactions on Easy.'));
     return;
   }
   root.replaceChildren(
+    createElement('li', 'reactions__intro', intro),
     ...reactions.map((reaction) => {
       const item = createElement('li', 'reactions__item');
       item.append(

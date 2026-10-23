@@ -1,7 +1,9 @@
 import { DIFFICULTIES, DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
+import { REACTIONS } from '../data/reactions.ts';
 import { RECIPES } from '../data/recipes.ts';
 import type { IGameState, IIngredient } from '../types.ts';
 import { getGameOverReason } from './game-over.ts';
+import { getReactions } from './reactions.ts';
 import { MAX_STOCK } from './stock.ts';
 
 function isWhole(value: unknown, min: number, max: number): value is number {
@@ -59,6 +61,19 @@ export function parseSave(data: unknown, catalogue: readonly IIngredient[]): IGa
     cauldronIngredients.push(ingredient);
   }
 
+  // The game's reactions: the right count, all different, all from this difficulty's pool.
+  const { reactionIds: rawReactions } = save;
+  const pool = getReactions(REACTIONS, difficulty);
+  if (
+    !Array.isArray(rawReactions) ||
+    rawReactions.length !== settings.reactions ||
+    new Set(rawReactions).size !== rawReactions.length ||
+    !rawReactions.every((id) => pool.some((reaction) => reaction.id === id))
+  ) {
+    return null;
+  }
+  const reactionIds = pool.map(({ id }) => id).filter((id) => rawReactions.includes(id));
+
   const state: IGameState = {
     difficulty,
     status: save.status,
@@ -68,6 +83,7 @@ export function parseSave(data: unknown, catalogue: readonly IIngredient[]): IGa
     activeRecipe,
     cauldronIngredients,
     shelfStock,
+    reactionIds,
   };
   // A game that is already over is never offered as Continue.
   return getGameOverReason(state) ? null : state;
