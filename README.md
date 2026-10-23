@@ -40,8 +40,9 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 3.3 — chemical reactions
 - [x] US 3.4 — pour out
 - [x] US 3.5 — visual feedback
+- [x] US 3.6 — keyboard shortcuts
 
-Level 1 is complete.
+All levels (1–3) are complete.
 
 ## How to play
 
@@ -84,6 +85,18 @@ Level 1 is complete.
   - Either way the cauldron is cleared and the used ingredients are spent.
 - **Pour Out** (under the cauldron) empties a wrong mix for **10 s** instead of a life. Score, lives, recipe and stock stay the same, and the poured ingredients are not returned to the shelf. It is disabled while the cauldron is empty or the game is paused. With less than 10 s left it ends the game (**Time is up**).
 - **Visual feedback**, done with CSS animations only (no timers): the added ingredients float on the liquid in the pot; a correct brew flashes the pot green with a ring of light and a rising `+10s`; a failed brew shows an explosion over the pot and a short screen shake. The bar markers and target zones slide smoothly. The floating icons stop while paused, and all animations are turned off with the system's reduced-motion setting.
+- **Keyboard shortcuts** work only during active play (not on the start, pause or Game Over screens, not while a dialog such as Help is open, and not while typing in a text field):
+
+  | Key                         | Action                                                |
+  | --------------------------- | ----------------------------------------------------- |
+  | `1` … `8`                   | add the 1st … 8th shelf ingredient (up to shelf size) |
+  | `B`                         | Brew                                                  |
+  | `O`                         | Pour Out                                              |
+  | `P` / `Esc`                 | Pause                                                 |
+  | `Esc` (on the pause screen) | Resume (the dialog's own close key)                   |
+
+  Held-down keys and keys with Ctrl / Cmd / Alt are ignored. All buttons stay real focusable buttons, so `Tab`, `Enter` and `Space` work the normal browser way.
+
 - The game starts with **150 s** and **3 lives** (hearts in the top bar). The timer shows `MM:SS` and a shrinking bar, and turns red and pulses under **15 s**. It is calculated from timestamps, so it stays correct in a background tab.
 - Press the **Pause** button next to the timer to stop the game: the timer stops, the field is blurred and the shelf and Brew are blocked. **Resume** continues the same game, **Exit to Menu** goes back to the start screen. The game also pauses by itself when the browser tab is hidden.
 - The running game is saved in `localStorage` after every move, on pause and while the timer runs. After a reload, **Continue Game** appears on the start screen. It restores the same difficulty, score, time, lives, recipe, cauldron and stock (not re-rolled) and opens the game paused. A new game overwrites the save; **Exit to Menu** and Game Over delete it. A broken or edited save is checked field by field, deleted, and never offered.

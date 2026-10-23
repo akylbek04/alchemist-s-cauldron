@@ -134,6 +134,11 @@
           empty.
         </li>
         <li>
+          <strong>Keys</strong> during play: <kbd>1</kbd>–<kbd data-setting="shelfSize">6</kbd> add
+          an ingredient, <kbd>B</kbd> brew, <kbd>O</kbd> pour out, <kbd>P</kbd> or
+          <kbd>Esc</kbd> pause. On the pause screen <kbd>Esc</kbd> resumes.
+        </li>
+        <li>
           <strong>Reactions.</strong> Some mixes react while they stay in the cauldron and change
           the values. A time or life cost is paid once, when the reaction starts.
           <ul class="reactions" id="help-reactions"></ul>
@@ -251,12 +256,7 @@
       </form>
     </dialog>
 
-    <dialog
-      class="dialog dialog--pause"
-      id="pause-dialog"
-      aria-labelledby="pause-title"
-      closedby="none"
-    >
+    <dialog class="dialog dialog--pause" id="pause-dialog" aria-labelledby="pause-title">
       <h2 class="dialog__title dialog__title--large" id="pause-title">Game Paused</h2>
       <p class="dialog__text" id="pause-note" hidden>Your saved game is restored.</p>
       <div class="dialog__actions">
