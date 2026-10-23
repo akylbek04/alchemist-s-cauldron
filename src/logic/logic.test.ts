@@ -1,8 +1,16 @@
 // Run with `npm test` (Node's built-in runner strips the types).
-import { addIngredient, calculateCauldron, isCauldronFull, isInRange } from './cauldron.ts';
+import {
+  addIngredient,
+  calculateCauldron,
+  canPourOut,
+  isCauldronFull,
+  isInRange,
+  pourOut,
+} from './cauldron.ts';
 import { getRecipesByDifficulty, pickRandom } from './recipe-generator.ts';
 import { createStock, MAX_STOCK, MIN_STOCK } from './stock.ts';
 import { DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
+import { REACTIONS } from '../data/reactions.ts';
 import { RECIPES } from '../data/recipes.ts';
 import { brew, canBrew, isBrewSuccessful } from './brew-check.ts';
 import { getGameOverReason, isOutOfIngredients } from './game-over.ts';
@@ -14,9 +22,24 @@ import {
   qualifies,
   sortEntries,
 } from './leaderboard.ts';
+import {
+  applyReactionCosts,
+  getCauldronValues,
+  getFiredReactions,
+  getReactions,
+  getReactionsByIds,
+  pickReactions,
+} from './reactions.ts';
 import { parseSave } from './save.ts';
 import { formatTime, getEndTime, getTimeLeft } from './timer.ts';
-import type { IGameState, IIngredient, ILeaderboardEntry, IRecipe } from '../types.ts';
+import type {
+  Difficulty,
+  IGameState,
+  IReaction,
+  IIngredient,
+  ILeaderboardEntry,
+  IRecipe,
+} from '../types.ts';
 
 function check(condition: boolean, message: string): void {
   if (!condition) {
@@ -65,6 +88,7 @@ let state: IGameState = {
   activeRecipe: recipe,
   cauldronIngredients: [],
   shelfStock: { a: 2, b: 1 },
+  reactionIds: [],
 };
 state = addIngredient(state, tears, 4);
 state = addIngredient(state, dust, 4);
@@ -85,6 +109,7 @@ const full: IGameState = {
   activeRecipe: recipe,
   cauldronIngredients: [tears, tears],
   shelfStock: { a: 5 },
+  reactionIds: [],
 };
 check(isCauldronFull(full, 2), 'cauldron with 2 of 2 must be full');
 check(addIngredient(full, tears, 2) === full, 'full cauldron must ignore adds');
@@ -160,10 +185,11 @@ const brewing: IGameState = {
   activeRecipe: recipe,
   cauldronIngredients: [tears, dust],
   shelfStock: { a: 1, b: 1 },
+  reactionIds: [],
 };
 check(canBrew(brewing) && !canBrew({ ...brewing, cauldronIngredients: [] }), 'brew needs 1+');
 
-const won = brew(brewing, medium, () => next);
+const won = brew(brewing, medium, () => next, []);
 check(won.success, 'worked example brews');
 check(won.state.score === 200, 'success adds 200');
 check(won.state.timeLeft === 150, 'time bonus is capped at the start time (145 + 10 -> 150)');
@@ -171,7 +197,7 @@ check(won.state.activeRecipe === next, 'success picks a new recipe');
 check(won.state.cauldronIngredients.length === 0, 'success clears the cauldron');
 check(won.state.shelfStock.a === 1 && won.state.lives === 3, 'stock and lives untouched');
 
-const lost = brew({ ...brewing, cauldronIngredients: [frost] }, medium, () => next);
+const lost = brew({ ...brewing, cauldronIngredients: [frost] }, medium, () => next, []);
 check(!lost.success, 'wrong mix fails');
 check(lost.state.lives === 2 && lost.state.score === 0, 'failure costs 1 life, no score');
 check(lost.state.activeRecipe === recipe, 'failure keeps the recipe');
@@ -268,6 +294,7 @@ const saved: IGameState = {
   activeRecipe: easyRecipe ?? recipe,
   cauldronIngredients: [catalogue[1] ?? tears, catalogue[1] ?? tears],
   shelfStock: { i0: 0, i1: 3, i2: 15, i3: 7 },
+  reactionIds: [],
 };
 const restored = parseSave(JSON.parse(JSON.stringify(saved)), catalogue);
 check(JSON.stringify(restored) === JSON.stringify(saved), 'a valid save is restored as it was');
@@ -309,3 +336,185 @@ const broken: [string, unknown][] = [
 for (const [name, data] of broken) {
   check(parseSave(data, catalogue) === null, `broken save must be rejected: ${name}`);
 }
+
+// Saved reactions: a Medium save keeps its 2 picked reactions (in table order).
+const mediumRecipe = RECIPES.find((r) => r.difficulty === 'medium');
+const savedMedium: IGameState = {
+  ...saved,
+  difficulty: 'medium',
+  lives: 3,
+  activeRecipe: mediumRecipe ?? recipe,
+  shelfStock: { i0: 1, i1: 3, i2: 15, i3: 7, i4: 2, i5: 9 },
+  reactionIds: ['solar-frost', 'bubbling'],
+};
+check(
+  parseSave(JSON.parse(JSON.stringify(savedMedium)), catalogue)?.reactionIds.join() ===
+    'bubbling,solar-frost',
+  'saved reactions are restored',
+);
+const brokenReactions: [string, unknown][] = [
+  ['no reactions field', { ...savedMedium, reactionIds: undefined }],
+  ['too few reactions', { ...savedMedium, reactionIds: ['bubbling'] }],
+  ['too many reactions', { ...savedMedium, reactionIds: ['bubbling', 'solar-frost', 'black-ice'] }],
+  ['same reaction twice', { ...savedMedium, reactionIds: ['bubbling', 'bubbling'] }],
+  ['unknown reaction', { ...savedMedium, reactionIds: ['bubbling', 'nope'] }],
+  ['Hard reaction on Medium', { ...savedMedium, reactionIds: ['bubbling', 'volatile-mix'] }],
+  ['reactions on Easy', { ...saved, reactionIds: ['bubbling'] }],
+  ['reactions not an array', { ...savedMedium, reactionIds: 'bubbling' }],
+];
+for (const [name, data] of brokenReactions) {
+  check(parseSave(data, catalogue) === null, `broken save must be rejected: ${name}`);
+}
+
+// Reactions: the full 15-row table, split into a Medium and a Hard pool.
+const reactionIds = REACTIONS.map((reaction) => reaction.id);
+check(REACTIONS.length === 15 && new Set(reactionIds).size === 15, 'all 15 reactions, unique ids');
+check(getReactions(REACTIONS, 'easy').length === 0, 'Easy has no reactions');
+check(getReactions(REACTIONS, 'medium').length === 7, 'Medium pool: 7 reactions');
+check(getReactions(REACTIONS, 'hard').length === 8, 'Hard pool: 8 reactions');
+
+// Each game picks the table's count from its pool: different reactions, never from another pool.
+for (const level of ['easy', 'medium', 'hard'] as const satisfies readonly Difficulty[]) {
+  const pool = getReactions(REACTIONS, level);
+  for (const roll of [0, 0.5, 0.9999]) {
+    const picked = pickReactions(pool, DIFFICULTY_SETTINGS[level].reactions, () => roll);
+    check(picked.length === DIFFICULTY_SETTINGS[level].reactions, `${level}: reaction count`);
+    check(new Set(picked).size === picked.length, `${level}: no reaction picked twice`);
+    check(
+      picked.every((reaction) => pool.includes(reaction)),
+      `${level}: only its own pool`,
+    );
+  }
+}
+
+const byIds = (...ids: string[]): readonly IReaction[] => getReactionsByIds(REACTIONS, ids);
+check(
+  byIds('solar-frost', 'bubbling')
+    .map((r) => r.id)
+    .join() === 'bubbling,solar-frost',
+  'reactions keep the table order',
+);
+const medium3 = byIds('bubbling', 'solar-frost');
+const hard3 = byIds('volatile-mix', 'pressure-spike', 'burning-root');
+function real(id: string, temperature: number, density: number, magicPower: number): IIngredient {
+  return { id, name: id, icon: '', temperature, density, magicPower };
+}
+const fairy = real('fairy-dust', 12, 9, 12);
+const acid = real('caustic-acid', 10, 14, 22);
+const dragon = real('dragon-tears', 25, 8, 10);
+const lotus = real('frost-lotus', -18, 4, 14);
+const phoenix = real('phoenix-feather', 50, -10, 30);
+const voidEssence = real('essence-of-the-void', -20, -10, 40);
+const slime = real('toad-slime', 5, 30, 0);
+const mandrake = real('mandrake-root', -5, 20, 8);
+
+// Every row of the table: a mix that triggers it alone, and the values after it.
+const effects: [string, IIngredient[], [number, number, number]][] = [
+  ['bubbling', [fairy, acid], [22, 23, 51]],
+  ['volatile-mix', [phoenix, voidEssence], [30, -20, 70]],
+  ['solar-frost', [dragon, lotus], [0, 14, 24]],
+  ['rooted-steam', [mandrake, slime], [0, 63, 7]],
+  ['ashen-bloom', [phoenix, fairy], [72, -1, 53]],
+  ['annihilation', [dragon, lotus], [0, 24, 24]],
+  ['pressure-spike', [slime, slime, slime], [15, 70, 0]],
+  ['magma-flux', [phoenix, acid], [60, 4, 62]],
+  ['deep-freeze', [voidEssence], [-20, -11, 34]],
+  ['arcane-saturation', [voidEssence, voidEssence], [-35, -20, 80]],
+  ['steam-burst', [dragon, acid], [45, 22, 32]],
+  ['black-ice', [lotus, voidEssence], [-48, -6, 65]],
+  ['heavy-spark', [fairy, slime, mandrake], [12, 71, 22]],
+  ['burning-root', [mandrake, phoenix], [60, 9, 38]],
+  ['void-resonance', [voidEssence, dragon], [0, -2, 65]],
+];
+check(effects.length === 15, 'every reaction has a test row');
+for (const [id, mix, [temperature, density, magicPower]] of effects) {
+  const values = getCauldronValues(mix, byIds(id));
+  check(
+    values.temperature === temperature &&
+      values.density === density &&
+      values.magicPower === magicPower,
+    `${id}: expected ${String([temperature, density, magicPower])}, got ${String(Object.values(values))}`,
+  );
+}
+
+// The extra total in a Mix trigger matters; the pair alone is not enough.
+const inactive: [string, IIngredient[]][] = [
+  ['steam-burst', [dragon, acid, lotus]], // T 17
+  ['black-ice', [lotus, voidEssence, slime]], // D 24
+  ['heavy-spark', [fairy, slime]], // D 39
+  ['burning-root', [mandrake, phoenix, lotus]], // T 27
+  ['void-resonance', [voidEssence, dragon, real('x', 0, 0, -1)]], // MP 49
+  ['annihilation', [fairy, lotus]], // 12 is not > 15
+  ['pressure-spike', [slime, slime, real('x', 0, 9, 0)]], // D 69
+];
+for (const [id, mix] of inactive) {
+  check(!byIds(id)[0]?.isActive(mix), `${id} must stay off for this mix`);
+}
+
+// Values are rebuilt from the list: sums, then active reactions.
+check(getCauldronValues([fairy, acid], []).magicPower === 34, 'no reactions: plain sums');
+check(getCauldronValues([fairy, acid], hard3).magicPower === 34, 'unpicked reaction does nothing');
+const both = getCauldronValues([fairy, acid, dragon, lotus], medium3);
+check(both.temperature === 0 && both.magicPower === 87, 'two active reactions both apply');
+
+// Fires only on the change from not active to active.
+const names = (list: readonly { id: string }[]): string => list.map((r) => r.id).join();
+check(names(getFiredReactions([fairy], [fairy, acid], medium3)) === 'bubbling', 'fires on start');
+check(getFiredReactions([fairy, acid], [fairy, acid, dragon], medium3).length === 0, 'no refire');
+check(
+  names(getFiredReactions([fairy, acid, dragon], [fairy, acid, dragon, lotus], medium3)) ===
+    'solar-frost',
+  'a second reaction fires on its own',
+);
+check(names(getFiredReactions([], [fairy, acid], medium3)) === 'bubbling', 'fires again later');
+
+// One-time costs.
+const reacting: IGameState = { ...brewing, timeLeft: 8, cauldronIngredients: [fairy, acid] };
+const bubbledState = applyReactionCosts(
+  reacting,
+  getFiredReactions([fairy], [fairy, acid], medium3),
+);
+check(bubbledState.timeLeft === 0 && bubbledState.lives === 3, 'Bubbling: −10 s, never below 0');
+const steamed = applyReactionCosts(brewing, byIds('steam-burst'));
+check(steamed.timeLeft === 140, 'Steam Burst: −5 s');
+const volatile = applyReactionCosts(
+  { ...brewing, cauldronIngredients: [phoenix, voidEssence] },
+  getFiredReactions([phoenix], [phoenix, voidEssence], hard3),
+);
+check(
+  volatile.lives === 2 && volatile.cauldronIngredients.length === 0,
+  'Volatile Mix: −1 life, clear',
+);
+
+// Brew checks the reacted values: plain Magic Power 34 misses 45..55, Bubbling makes 51.
+const bubblingRecipe: IRecipe = {
+  ...recipe,
+  temperature: { min: 17, max: 27 },
+  density: { min: 18, max: 28 },
+  magicPower: { min: 45, max: 55 },
+};
+const mixing: IGameState = {
+  ...brewing,
+  activeRecipe: bubblingRecipe,
+  cauldronIngredients: [fairy, acid],
+};
+check(brew(mixing, medium, () => next, medium3).success, 'brew uses the reacted values');
+check(!brew(mixing, medium, () => next, []).success, 'without the reaction the brew fails');
+
+// Pour Out: clears the cauldron for 10 s, keeps lives, score, recipe and stock.
+const poured = pourOut(brewing);
+check(poured.cauldronIngredients.length === 0, 'pour out clears the cauldron');
+check(poured.timeLeft === 135, 'pour out costs 10 s (145 -> 135)');
+check(
+  poured.lives === 3 && poured.score === 0 && poured.activeRecipe === recipe,
+  'pour out keeps lives, score and recipe',
+);
+check(
+  poured.shelfStock.a === 1 && poured.shelfStock.b === 1,
+  'poured ingredients are not returned',
+);
+check(
+  !canPourOut(poured) && pourOut(poured) === poured,
+  'empty cauldron: no pour out, no time cost',
+);
+check(pourOut({ ...brewing, timeLeft: 4 }).timeLeft === 0, 'pour out never goes below 0 s');

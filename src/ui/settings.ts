@@ -1,5 +1,5 @@
 import { DIFFICULTIES, DIFFICULTY_LABELS, DIFFICULTY_SETTINGS } from '../data/difficulty.ts';
-import type { Difficulty, IDifficultySettings } from '../types.ts';
+import type { Difficulty, IDifficultySettings, IReaction } from '../types.ts';
 import { createElement } from './dom.ts';
 
 export function describeReactions(count: number): string {
@@ -42,4 +42,28 @@ export function renderHelp(root: HTMLElement, settings: IDifficultySettings): vo
     const key = element.dataset.setting as keyof IDifficultySettings;
     element.textContent = String(settings[key]);
   }
+}
+
+// The reactions listed in Help, after a short intro line.
+export function renderReactions(
+  root: HTMLElement,
+  reactions: readonly IReaction[],
+  intro: string,
+): void {
+  if (reactions.length === 0) {
+    root.replaceChildren(createElement('li', 'reactions__empty', 'No reactions on Easy.'));
+    return;
+  }
+  root.replaceChildren(
+    createElement('li', 'reactions__intro', intro),
+    ...reactions.map((reaction) => {
+      const item = createElement('li', 'reactions__item');
+      item.append(
+        createElement('strong', 'reactions__name', reaction.name),
+        createElement('span', 'reactions__trigger', reaction.trigger),
+        createElement('span', 'reactions__effect', reaction.effect),
+      );
+      return item;
+    }),
+  );
 }

@@ -45,9 +45,22 @@
           <div class="shelf__list" id="shelf"></div>
         </section>
 
-        <section class="cauldron" aria-label="Cauldron">
-          <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
+        <section class="cauldron" id="cauldron" aria-label="Cauldron">
+          <div class="cauldron__vessel">
+            <img class="cauldron__pot" src="/src/assets/cauldron.svg" alt="" />
+            <div class="cauldron__floats" id="cauldron-floats" aria-hidden="true"></div>
+            <div class="cauldron__burst" aria-hidden="true"></div>
+            <p class="cauldron__gain" id="cauldron-gain" aria-hidden="true"></p>
+          </div>
           <ol class="cauldron__list" id="cauldron-list" aria-label="In the cauldron"></ol>
+          <button
+            class="main-button main-button--small main-button--secondary cauldron__pour"
+            id="pour-button"
+            type="button"
+            hidden
+          >
+            Pour Out <span class="cauldron__pour-cost">−10 s</span>
+          </button>
           <p class="message" id="message" role="status"></p>
         </section>
 
@@ -96,7 +109,8 @@
           in the recipe book.
         </li>
         <li>
-          Click ingredients on the shelf to add them to the cauldron. You may add up to
+          Click ingredients on the shelf, or drag them into the cauldron, to add them. Hover a card
+          to see its numbers. You may add up to
           <strong data-setting="maxCauldronIngredients">4</strong>. Each ingredient has a limited
           stock.
         </li>
@@ -118,6 +132,16 @@
           The game ends when the time runs out, you lose all
           <strong data-setting="lives">3</strong> lives, or the shelf and the cauldron are both
           empty.
+        </li>
+        <li>
+          <strong>Keys</strong> during play: <kbd>1</kbd>–<kbd data-setting="shelfSize">6</kbd> add
+          an ingredient, <kbd>B</kbd> brew, <kbd>O</kbd> pour out, <kbd>P</kbd> or
+          <kbd>Esc</kbd> pause. On the pause screen <kbd>Esc</kbd> resumes.
+        </li>
+        <li>
+          <strong>Reactions.</strong> Some mixes react while they stay in the cauldron and change
+          the values. A time or life cost is paid once, when the reaction starts.
+          <ul class="reactions" id="help-reactions"></ul>
         </li>
       </ol>
       <form method="dialog">
@@ -232,12 +256,7 @@
       </form>
     </dialog>
 
-    <dialog
-      class="dialog dialog--pause"
-      id="pause-dialog"
-      aria-labelledby="pause-title"
-      closedby="none"
-    >
+    <dialog class="dialog dialog--pause" id="pause-dialog" aria-labelledby="pause-title">
       <h2 class="dialog__title dialog__title--large" id="pause-title">Game Paused</h2>
       <p class="dialog__text" id="pause-note" hidden>Your saved game is restored.</p>
       <div class="dialog__actions">

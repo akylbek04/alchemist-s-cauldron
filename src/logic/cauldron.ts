@@ -31,6 +31,25 @@ export function addIngredient(
   };
 }
 
+export const POUR_OUT_TIME_COST = 10; // seconds
+
+// Shared by brew and Pour Out: used ingredients are spent, never returned to the shelf.
+export function clearCauldron(state: IGameState): IGameState {
+  return { ...state, cauldronIngredients: [] };
+}
+
+export function canPourOut(state: IGameState): boolean {
+  return state.cauldronIngredients.length > 0;
+}
+
+// Costs 10 s and no life. Returns the same state when the cauldron is already empty.
+export function pourOut(state: IGameState): IGameState {
+  if (!canPourOut(state)) {
+    return state;
+  }
+  return { ...clearCauldron(state), timeLeft: Math.max(0, state.timeLeft - POUR_OUT_TIME_COST) };
+}
+
 export function calculateCauldron(ingredients: readonly IIngredient[]): ICauldronValues {
   const values: ICauldronValues = { temperature: 0, density: 0, magicPower: 0 };
   for (const ingredient of ingredients) {

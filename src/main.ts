@@ -6,10 +6,18 @@ import {
   DIFFICULTY_SETTINGS,
 } from './data/difficulty.ts';
 import { PARAMETERS } from './data/parameters.ts';
+import { REACTIONS } from './data/reactions.ts';
 import { brew, canBrew } from './logic/brew-check.ts';
-import { addIngredient, calculateCauldron, isCauldronFull } from './logic/cauldron.ts';
+import { addIngredient, canPourOut, isCauldronFull, pourOut } from './logic/cauldron.ts';
 import { getGameOverReason } from './logic/game-over.ts';
 import { addEntry, isValidName, qualifies } from './logic/leaderboard.ts';
+import {
+  applyReactionCosts,
+  getCauldronValues,
+  getFiredReactions,
+  getReactions,
+  getReactionsByIds,
+} from './logic/reactions.ts';
 import { getEndTime, getTimeLeft } from './logic/timer.ts';
 import { createGameState, getShelfIngredients, pickRecipe } from './state/game-state.ts';
 import { clearLeaderboard, loadLeaderboard, saveLeaderboard } from './storage/leaderboard.ts';
@@ -20,15 +28,16 @@ import type {
   IGameState,
   IIngredient,
   ILeaderboardEntry,
+  IReaction,
 } from './types.ts';
 import { createBars } from './ui/bars.ts';
-import { renderCauldron } from './ui/cauldron.ts';
+import { createDropZone, playEffect, renderCauldron } from './ui/cauldron.ts';
 import { showGameOver, showNameError } from './ui/dialogs.ts';
 import { getElement } from './ui/dom.ts';
 import { renderHud } from './ui/hud.ts';
 import { renderLeaderboard } from './ui/leaderboard.ts';
 import { createRecipePanel } from './ui/recipe.ts';
-import { createSettingsPanel, renderHelp } from './ui/settings.ts';
+import { createSettingsPanel, renderHelp, renderReactions } from './ui/settings.ts';
 import { createShelf, type UpdateShelf } from './ui/shelf.ts';
 
 const hud = {
@@ -62,6 +71,10 @@ const recipeNote = getElement('#recipe-note');
 const leaderboardButton = getElement('#leaderboard-button');
 const shelf = getElement('#shelf');
 const cauldronList = getElement('#cauldron-list');
+const cauldronFloats = getElement('#cauldron-floats');
+const cauldron = getElement('#cauldron');
+const cauldronGain = getElement('#cauldron-gain');
+const game = getElement('.game');
 const message = getElement('#message');
 const startButton = getElement('#start-button');
 const continueButton = getElement('#continue-button');
@@ -70,7 +83,9 @@ const pauseButton = getElement('#pause-button') as HTMLButtonElement;
 const clockIcon = getElement('#clock-icon');
 const pauseDialog = getElement('#pause-dialog') as HTMLDialogElement;
 const brewButton = getElement('#brew-button') as HTMLButtonElement;
+const pourButton = getElement('#pour-button') as HTMLButtonElement;
 const helpDialog = getElement('#help-dialog') as HTMLDialogElement;
+const helpReactions = getElement('#help-reactions');
 
 // null = start screen: empty shelf and cauldron, score and time 0, no lives.
 let state: IGameState | null = null;
@@ -98,31 +113,76 @@ function getSettings(): IDifficultySettings {
   return DIFFICULTY_SETTINGS[state?.difficulty ?? difficulty];
 }
 
+// The reactions picked for the running game; none on the start screen.
+function getActiveReactions(): readonly IReaction[] {
+  return state ? getReactionsByIds(REACTIONS, state.reactionIds) : [];
+}
+
+// Help shows the running game's reactions, or the pool of the chosen difficulty.
+function showReactionsHelp(): void {
+  if (state) {
+    renderReactions(helpReactions, getActiveReactions(), 'Reactions in this game:');
+    return;
+  }
+  const pool = getReactions(REACTIONS, difficulty);
+  const { reactions } = DIFFICULTY_SETTINGS[difficulty];
+  renderReactions(
+    helpReactions,
+    pool,
+    `Each ${DIFFICULTY_LABELS[difficulty]} game picks ${String(reactions)} of these ${String(pool.length)} at random:`,
+  );
+}
+
 function addToCauldron(ingredient: IIngredient): void {
   if (state?.status !== 'playing') return;
   const next = addIngredient(state, ingredient, getSettings().maxCauldronIngredients);
   if (next === state) return;
-  state = next;
-  showMessage('');
+  const fired = getFiredReactions(
+    state.cauldronIngredients,
+    next.cauldronIngredients,
+    getActiveReactions(),
+  );
+  // Time costs need the current time left, and then a countdown from the new value.
+  syncTime();
+  state = applyReactionCosts({ ...next, timeLeft: state.timeLeft }, fired);
+  startClock();
+  showMessage(
+    fired.map((reaction) => `${reaction.name}! ${reaction.effect}`).join(' · '),
+    fired.length > 0 ? 'reaction' : undefined,
+  );
   render();
   checkGameOver();
 }
 
 let updateShelf: UpdateShelf = createShelf(shelf, [], addToCauldron);
 
+// A drop adds the same ingredient through the same checks as a click.
+createDropZone(
+  getElement('#cauldron'),
+  () => state?.status === 'playing' && !isCauldronFull(state, getSettings().maxCauldronIngredients),
+  (id) => {
+    const ingredient = getShelfIngredients(getSettings()).find((item) => item.id === id);
+    if (ingredient) {
+      addToCauldron(ingredient);
+    }
+  },
+);
+
 // Shelf size, help numbers and the recipe note follow the chosen difficulty.
 function applyDifficulty(): void {
   const settings = DIFFICULTY_SETTINGS[difficulty];
   updateShelf = createShelf(shelf, getShelfIngredients(settings), addToCauldron);
   renderHelp(helpDialog, settings);
+  showReactionsHelp();
   recipeNote.textContent = `${DIFFICULTY_LABELS[difficulty]} · brew tolerance ±${String(settings.tolerance)}`;
   updateSettings(difficulty);
 }
 
-function showMessage(text: string, type?: 'success' | 'failure'): void {
+function showMessage(text: string, type?: 'success' | 'failure' | 'reaction'): void {
   message.textContent = text;
   message.classList.toggle('message--success', type === 'success');
   message.classList.toggle('message--failure', type === 'failure');
+  message.classList.toggle('message--reaction', type === 'reaction');
 }
 
 function startClock(): void {
@@ -247,9 +307,9 @@ function render(): void {
     state?.shelfStock ?? {},
     !state || !isPlaying || isCauldronFull(state, settings.maxCauldronIngredients),
   );
-  renderCauldron(cauldronList, ingredients);
+  renderCauldron(cauldronList, cauldronFloats, ingredients);
   updateRecipe(state?.activeRecipe ?? null, ingredients.length, settings.maxCauldronIngredients);
-  updateBars(calculateCauldron(ingredients), state?.activeRecipe ?? null);
+  updateBars(getCauldronValues(ingredients, getActiveReactions()), state?.activeRecipe ?? null);
   updateHud();
 
   // While paused the play field is blurred, so nothing can be planned.
@@ -263,6 +323,8 @@ function render(): void {
   leaderboardButton.hidden = state !== null;
   brewButton.hidden = state === null;
   brewButton.disabled = !state || !isPlaying || !canBrew(state);
+  pourButton.hidden = state === null;
+  pourButton.disabled = !state || !isPlaying || !canPourOut(state);
   continueButton.hidden = state !== null || savedGame === null;
 
   persist();
@@ -277,7 +339,12 @@ brewButton.addEventListener('click', () => {
   syncTime();
   const before = state;
   const { difficulty: current } = state;
-  const result = brew(state, DIFFICULTY_SETTINGS[current], () => pickRecipe(current));
+  const result = brew(
+    state,
+    DIFFICULTY_SETTINGS[current],
+    () => pickRecipe(current),
+    getActiveReactions(),
+  );
   state = result.state;
   // The brew may add a time bonus: restart the countdown from the new time left.
   startClock();
@@ -289,9 +356,24 @@ brewButton.addEventListener('click', () => {
       `${before.activeRecipe.name} brewed! +${String(state.score - before.score)} points${timeText}`,
       'success',
     );
+    cauldronGain.textContent = timeGained > 0 ? `+${String(timeGained)}s` : '';
+    playEffect(cauldron, 'cauldron--success', ['cauldron--fail']);
   } else {
     showMessage('The mixture failed! −1 life', 'failure');
+    playEffect(cauldron, 'cauldron--fail', ['cauldron--success']);
+    playEffect(game, 'game--shake');
   }
+  render();
+  checkGameOver();
+});
+
+// Clears a wrong mix for 10 s instead of a life.
+pourButton.addEventListener('click', () => {
+  if (state?.status !== 'playing' || !canPourOut(state)) return;
+  syncTime();
+  state = pourOut(state);
+  startClock();
+  showMessage('Poured out! −10 s', 'failure');
   render();
   checkGameOver();
 });
@@ -364,6 +446,55 @@ confirmDialog.addEventListener('close', () => {
 pauseButton.addEventListener('click', pauseGame);
 getElement('#resume-button').addEventListener('click', resumeGame);
 getElement('#exit-button').addEventListener('click', exitToMenu);
+// Esc on the pause screen is the dialog's own close request: it resumes the game
+// instead of closing the dialog and leaving the run paused.
+pauseDialog.addEventListener('cancel', (event) => {
+  event.preventDefault();
+  resumeGame();
+});
+
+// All game shortcuts live here. They work only during active play: the start,
+// pause and Game Over screens keep normal browser keys.
+const SHORTCUTS: Record<string, () => void> = {
+  b: () => {
+    brewButton.click();
+  },
+  o: () => {
+    pourButton.click();
+  },
+  p: pauseGame,
+  escape: pauseGame,
+};
+
+function isTyping(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+  );
+}
+
+document.addEventListener('keydown', (event) => {
+  if (state?.status !== 'playing') return;
+  // Help and other dialogs open during play keep their own keys.
+  if (document.querySelector('dialog[open]')) return;
+  if (event.ctrlKey || event.metaKey || event.altKey || event.repeat || isTyping(event.target)) {
+    return;
+  }
+  const key = event.key.toLowerCase();
+  // 1..N adds the N-th shelf ingredient, through the same checks as a click.
+  const ingredient = /^[1-9]$/.test(key)
+    ? getShelfIngredients(getSettings())[Number(key) - 1]
+    : undefined;
+  if (ingredient) {
+    event.preventDefault();
+    addToCauldron(ingredient);
+    return;
+  }
+  const action = SHORTCUTS[key];
+  if (!action) return;
+  event.preventDefault();
+  action();
+});
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
@@ -374,6 +505,7 @@ document.addEventListener('visibilitychange', () => {
 getElement('#help-button').addEventListener('click', () => {
   // The rules show the numbers of the current game, or of the chosen difficulty.
   renderHelp(helpDialog, getSettings());
+  showReactionsHelp();
   helpDialog.showModal();
 });
 
