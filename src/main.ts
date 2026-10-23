@@ -30,7 +30,7 @@ import type {
   IReaction,
 } from './types.ts';
 import { createBars } from './ui/bars.ts';
-import { createDropZone, renderCauldron } from './ui/cauldron.ts';
+import { createDropZone, playEffect, renderCauldron } from './ui/cauldron.ts';
 import { showGameOver, showNameError } from './ui/dialogs.ts';
 import { getElement } from './ui/dom.ts';
 import { renderHud } from './ui/hud.ts';
@@ -70,6 +70,10 @@ const recipeNote = getElement('#recipe-note');
 const leaderboardButton = getElement('#leaderboard-button');
 const shelf = getElement('#shelf');
 const cauldronList = getElement('#cauldron-list');
+const cauldronFloats = getElement('#cauldron-floats');
+const cauldron = getElement('#cauldron');
+const cauldronGain = getElement('#cauldron-gain');
+const game = getElement('.game');
 const message = getElement('#message');
 const startButton = getElement('#start-button');
 const continueButton = getElement('#continue-button');
@@ -286,7 +290,7 @@ function render(): void {
     state?.shelfStock ?? {},
     !state || !isPlaying || isCauldronFull(state, settings.maxCauldronIngredients),
   );
-  renderCauldron(cauldronList, ingredients);
+  renderCauldron(cauldronList, cauldronFloats, ingredients);
   updateRecipe(state?.activeRecipe ?? null, ingredients.length, settings.maxCauldronIngredients);
   updateBars(getCauldronValues(ingredients, getActiveReactions()), state?.activeRecipe ?? null);
   updateHud();
@@ -335,8 +339,12 @@ brewButton.addEventListener('click', () => {
       `${before.activeRecipe.name} brewed! +${String(state.score - before.score)} points${timeText}`,
       'success',
     );
+    cauldronGain.textContent = timeGained > 0 ? `+${String(timeGained)}s` : '';
+    playEffect(cauldron, 'cauldron--success', ['cauldron--fail']);
   } else {
     showMessage('The mixture failed! −1 life', 'failure');
+    playEffect(cauldron, 'cauldron--fail', ['cauldron--success']);
+    playEffect(game, 'game--shake');
   }
   render();
   checkGameOver();
