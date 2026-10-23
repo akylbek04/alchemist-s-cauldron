@@ -8,6 +8,28 @@ export function getReactions(
   return reactions.filter((reaction) => reaction.difficulty === difficulty);
 }
 
+// The reactions of one game: `count` different ones from the difficulty pool.
+export function pickReactions(
+  pool: readonly IReaction[],
+  count: number,
+  random: () => number = Math.random,
+): IReaction[] {
+  const left = [...pool];
+  const picked: IReaction[] = [];
+  while (picked.length < count && left.length > 0) {
+    picked.push(...left.splice(Math.floor(random() * left.length), 1));
+  }
+  return picked;
+}
+
+// Keeps the table order, which is also the order the reactions apply in.
+export function getReactionsByIds(
+  reactions: readonly IReaction[],
+  ids: readonly string[],
+): readonly IReaction[] {
+  return reactions.filter((reaction) => ids.includes(reaction.id));
+}
+
 // Always rebuilt from the ingredient list: plain sums, then every active reaction.
 export function getCauldronValues(
   ingredients: readonly IIngredient[],

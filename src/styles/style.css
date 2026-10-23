@@ -998,6 +998,12 @@ button {
   padding-left: 1.1em;
 }
 
+.reactions__intro {
+  margin-left: -1.1em;
+  list-style: none;
+  color: var(--text-muted);
+}
+
 .reactions__item {
   display: grid;
 }

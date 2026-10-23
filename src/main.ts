@@ -16,6 +16,7 @@ import {
   getCauldronValues,
   getFiredReactions,
   getReactions,
+  getReactionsByIds,
 } from './logic/reactions.ts';
 import { getEndTime, getTimeLeft } from './logic/timer.ts';
 import { createGameState, getShelfIngredients, pickRecipe } from './state/game-state.ts';
@@ -112,8 +113,24 @@ function getSettings(): IDifficultySettings {
   return DIFFICULTY_SETTINGS[state?.difficulty ?? difficulty];
 }
 
+// The reactions picked for the running game; none on the start screen.
 function getActiveReactions(): readonly IReaction[] {
-  return getReactions(REACTIONS, state?.difficulty ?? difficulty);
+  return state ? getReactionsByIds(REACTIONS, state.reactionIds) : [];
+}
+
+// Help shows the running game's reactions, or the pool of the chosen difficulty.
+function showReactionsHelp(): void {
+  if (state) {
+    renderReactions(helpReactions, getActiveReactions(), 'Reactions in this game:');
+    return;
+  }
+  const pool = getReactions(REACTIONS, difficulty);
+  const { reactions } = DIFFICULTY_SETTINGS[difficulty];
+  renderReactions(
+    helpReactions,
+    pool,
+    `Each ${DIFFICULTY_LABELS[difficulty]} game picks ${String(reactions)} of these ${String(pool.length)} at random:`,
+  );
 }
 
 function addToCauldron(ingredient: IIngredient): void {
@@ -156,7 +173,7 @@ function applyDifficulty(): void {
   const settings = DIFFICULTY_SETTINGS[difficulty];
   updateShelf = createShelf(shelf, getShelfIngredients(settings), addToCauldron);
   renderHelp(helpDialog, settings);
-  renderReactions(helpReactions, getReactions(REACTIONS, difficulty));
+  showReactionsHelp();
   recipeNote.textContent = `${DIFFICULTY_LABELS[difficulty]} · brew tolerance ±${String(settings.tolerance)}`;
   updateSettings(difficulty);
 }
@@ -488,7 +505,7 @@ document.addEventListener('visibilitychange', () => {
 getElement('#help-button').addEventListener('click', () => {
   // The rules show the numbers of the current game, or of the chosen difficulty.
   renderHelp(helpDialog, getSettings());
-  renderReactions(helpReactions, getActiveReactions());
+  showReactionsHelp();
   helpDialog.showModal();
 });
 

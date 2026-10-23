@@ -61,6 +61,7 @@ export interface IGameState {
   activeRecipe: IRecipe;
   cauldronIngredients: IIngredient[];
   shelfStock: Record<string, number>; // ingredient id -> portions left
+  reactionIds: string[]; // the reactions picked for this game
 }
 
 export interface IReaction {
