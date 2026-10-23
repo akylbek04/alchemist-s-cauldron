@@ -65,17 +65,27 @@ All levels (1–3) are complete.
 - The game picks a random recipe. The recipe book shows its name, the 3 target ranges and the counter **Ingredients: 0 / 4**.
 - The shelf shows 6 ingredients. Each card shows only its icon, name and a badge with the portions left (random 2–15 per game). Hover a card (or focus it with the keyboard) to see its **Temperature**, **Density** and **Magic Power** in a tooltip, with `+` / `−` signs. Near the right or bottom screen edge the tooltip opens to the left or upward; it is hidden while the game is paused.
 - Click a card (or focus it and press **Enter** / **Space**) to add the ingredient to the cauldron, or drag the card into the cauldron with the mouse (the cauldron glows while a valid card is over it). A drop follows the same rules as a click: nothing happens when the cauldron is full or the game is paused, and empty slots can't be dragged. Each add spends 1 portion. An ingredient with 0 portions becomes an empty slot.
-- **Reactions** (Medium and Hard): some mixes react while they stay in the cauldron. The values are always rebuilt from the ingredient list: plain sums first, then every active reaction in table order. The bars and the brew check both use these values. A reaction fires (message, and its one-time time or life cost) only when it changes from not active to active; adding more ingredients to the same mix does not fire it again. **Help** lists the reactions of the current difficulty.
+- **Reactions** (Medium and Hard): some mixes react while they stay in the cauldron. The game keeps the full 15-reaction table; each reaction belongs to the Medium or the Hard pool, and every new game picks **2** (Medium) or **3** (Hard) different reactions from its pool at random. Easy has none. The picked reactions are part of the saved game. The values are always rebuilt from the ingredient list: plain sums first, then every active picked reaction in table order. The bars and the brew check both use these values. A reaction fires (message, and its one-time time or life cost) only when it changes from not active to active; adding more ingredients to the same mix does not fire it again. **Help** shows the pool on the start screen and the picked reactions during a game.
 
-  | Difficulty | Reaction       | Trigger                                                    | Effect                              |
-  | ---------- | -------------- | ---------------------------------------------------------- | ----------------------------------- |
-  | Medium     | Bubbling       | Fairy Dust + Caustic Acid                                  | Magic Power +50%, −10 s once        |
-  | Medium     | Solar Frost    | Dragon Tears + Frost Lotus                                 | Temperature set to 0, Density +20%  |
-  | Hard       | Volatile Mix   | Phoenix Feather + Essence of the Void                      | −1 life and the cauldron is cleared |
-  | Hard       | Pressure Spike | Total Density ≥ 70                                         | Density set to 70, Magic Power +10% |
-  | Hard       | Burning Root   | Mandrake Root + Phoenix Feather and total Temperature ≥ 40 | Temperature +15, Density −10%       |
+  | Pool   | Reaction          | Trigger                                                       | Effect                                |
+  | ------ | ----------------- | ------------------------------------------------------------- | ------------------------------------- |
+  | Medium | Bubbling          | Fairy Dust + Caustic Acid                                     | Magic Power +50%, −10 s once          |
+  | Hard   | Volatile Mix      | Phoenix Feather + Essence of the Void                         | −1 life and the cauldron is cleared   |
+  | Medium | Solar Frost       | Dragon Tears + Frost Lotus                                    | Temperature set to 0, Density +20%    |
+  | Hard   | Rooted Steam      | Mandrake Root + Toad Slime                                    | Density +25%, Magic Power −10%        |
+  | Hard   | Ashen Bloom       | Phoenix Feather + Fairy Dust                                  | Temperature +10, Magic Power +25%     |
+  | Medium | Annihilation      | One ingredient with Temperature > +15 and another < −15       | Temperature set to 0, Density ×2      |
+  | Hard   | Pressure Spike    | Total Density ≥ 70                                            | Density set to 70, Magic Power +10%   |
+  | Hard   | Magma Flux        | Total Temperature ≥ 60                                        | Magic Power +20%, Density −10%        |
+  | Medium | Deep Freeze       | Total Temperature ≤ −20                                       | Density +15%, Magic Power −15%        |
+  | Hard   | Arcane Saturation | Total Magic Power ≥ 80                                        | Magic Power set to 80, Temperature +5 |
+  | Medium | Steam Burst       | Dragon Tears + Caustic Acid and total Temperature ≥ 35        | Temperature +10, −5 s once            |
+  | Medium | Black Ice         | Frost Lotus + Essence of the Void and total Density ≤ 0       | Temperature −10, Magic Power +20%     |
+  | Hard   | Heavy Spark       | Fairy Dust + Toad Slime and total Density ≥ 40                | Density +20%, Magic Power +10%        |
+  | Hard   | Burning Root      | Mandrake Root + Phoenix Feather and total Temperature ≥ 40    | Temperature +15, Density −10%         |
+  | Medium | Void Resonance    | Essence of the Void + Dragon Tears and total Magic Power ≥ 50 | Magic Power +30%, Temperature −5      |
 
-  Percent changes are rounded to whole numbers. Medium uses only ingredients from its 6-card shelf.
+  Triggers on totals use the plain sums. Percent changes are rounded to whole numbers. The Medium pool uses only ingredients from its 6-card shelf; reactions that need Phoenix Feather or Toad Slime are in the Hard pool, and the stats-only reactions are split between the two.
 
 - The cauldron holds up to 4 ingredients. When it is full (**4 / 4**, highlighted), the shelf is blocked.
 - The 3 bars show the cauldron's values (the sum of the added ingredients, starting at 0 / 0 / 0). The green zone is the recipe's target range, the diamond is the current value, and a bar glows when its value is inside the range. Temperature and Density can go negative: `0` is the center.
