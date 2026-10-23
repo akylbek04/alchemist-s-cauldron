@@ -38,6 +38,7 @@ The work is split into stories. Each story is developed in its own branch (`stor
 - [x] US 3.1 — drag & drop
 - [x] US 3.2 — ingredient tooltip
 - [x] US 3.3 — chemical reactions
+- [x] US 3.4 — pour out
 
 Level 1 is complete.
 
@@ -80,6 +81,7 @@ Level 1 is complete.
   - Success: **+200** points, **+10 s** (never above 150 s) and a new random recipe.
   - Failure: **−1 life**.
   - Either way the cauldron is cleared and the used ingredients are spent.
+- **Pour Out** (under the cauldron) empties a wrong mix for **10 s** instead of a life. Score, lives, recipe and stock stay the same, and the poured ingredients are not returned to the shelf. It is disabled while the cauldron is empty or the game is paused. With less than 10 s left it ends the game (**Time is up**).
 - The game starts with **150 s** and **3 lives** (hearts in the top bar). The timer shows `MM:SS` and a shrinking bar, and turns red and pulses under **15 s**. It is calculated from timestamps, so it stays correct in a background tab.
 - Press the **Pause** button next to the timer to stop the game: the timer stops, the field is blurred and the shelf and Brew are blocked. **Resume** continues the same game, **Exit to Menu** goes back to the start screen. The game also pauses by itself when the browser tab is hidden.
 - The running game is saved in `localStorage` after every move, on pause and while the timer runs. After a reload, **Continue Game** appears on the start screen. It restores the same difficulty, score, time, lives, recipe, cauldron and stock (not re-rolled) and opens the game paused. A new game overwrites the save; **Exit to Menu** and Game Over delete it. A broken or edited save is checked field by field, deleted, and never offered.
